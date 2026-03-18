@@ -36,7 +36,7 @@ mixin ExtendedProviderNotifierMixinBase<
 
   bool get disposed => _initialized && !hasListeners;
 
-  bool get debugLifecycle => true;
+  bool get debugLifecycle => false;
 
   final CustomLogger _logger = CustomLogger(owner: 'ExtendedNotifier');
 
