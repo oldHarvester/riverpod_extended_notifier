@@ -25,7 +25,16 @@ mixin ExtendedNotifierBase<
   State buildState();
 
   State _build() {
-    _beforeBuild();
-    return buildState();
+    ref.onDispose(() {
+      if (hasListeners) {
+        onWillLoad();
+      }
+    });
+    try {
+      _beforeBuild();
+      return buildState();
+    } finally {
+      onDidLoad(state);
+    }
   }
 }

@@ -11,7 +11,7 @@ final testProvider = AutoDisposeAsyncNotifierProvider<TestNotifier, List<int>>(
 );
 
 class TestNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
-  final Duration duration = Duration(seconds: 3);
+  final Duration duration = Duration(seconds: 2);
 
   void add(int id) async {
     executeUpdate(
@@ -25,8 +25,14 @@ class TestNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
   }
 
   @override
+  bool get disableRetries => true;
+
+  @override
   FutureOr<List<int>> buildState() async {
     await Future.delayed(duration);
+    if (retries < 4) {
+      throw UnimplementedError('Some error: $retries');
+    } 
     return List.generate(5, (index) => Random().nextInt(10));
   }
 }

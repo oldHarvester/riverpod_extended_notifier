@@ -6,6 +6,7 @@ abstract class ExtendedFamilyAsyncNotifier<State, Arg>
         ExtendedAsyncNotifierMixinBase<State, Arg>,
         ExtendedAsyncNotifierMixin<State, Arg> {
   @override
+
   FutureOr<State> build(Arg arg) => _build();
 }
 

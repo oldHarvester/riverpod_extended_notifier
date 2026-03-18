@@ -43,10 +43,26 @@ mixin ExtendedAsyncNotifierBase<
     on ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg, ExtendedRef> {
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
+  late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
 
   FlexibleCompleter<State> _createCompleter() =>
       FlexibleCompleter()..future.ignore();
 
+  AutoRestartExecutor<State> _createRetryExecutor() =>
+      AutoRestartExecutor<State>(
+        handler: buildState,
+        onError: disableRetries
+            ? (retries, error, stk) {
+                return false;
+              }
+            : shouldRetryOnError,
+        autoStart: false,
+        maxRetries: maxRetries,
+        restartDuration: retryRestartDuration,
+        timeOutDuration: retriesTimeoutDuration,
+      );
+
+  @protected
   FutureOr<State> buildState();
 
   Future<bool> refresh() async {
@@ -61,37 +77,97 @@ mixin ExtendedAsyncNotifierBase<
 
   Future<State> get future => _refreshRecompleter.future;
 
-  FutureOr<State> fetchState() async {
+  @override
+  @mustCallSuper
+  void onDidLoad(AsyncValue<State> state) {
+    switch (state) {
+      case final AsyncLoading<State> _:
+        break;
+      case final AsyncError<State> _:
+        onDidLoadFailed(state.error, state.stackTrace);
+        break;
+      case final AsyncData<State> _:
+        onDidLoadSucceed(state.value);
+        break;
+    }
+  }
+
+  @protected
+  FutureOr<bool?> shouldRetryOnError(
+    int retries,
+    Object error,
+    StackTrace stackTrace,
+  ) => true;
+
+  @protected
+  Duration get retryRestartDuration => Duration(seconds: 5);
+
+  @protected
+  Duration? get retriesTimeoutDuration => null;
+
+  @protected
+  int? get maxRetries => null;
+
+  @protected
+  int get retries => _retryExecutor.retries;
+
+  @protected
+  bool get disableRetries => false;
+
+  @protected
+  void onDidLoadFailed(Object error, StackTrace stackTrace) {
+    _logLifecycle('on did load failed');
+  }
+
+  @protected
+  void onDidLoadSucceed(State state) {
+    _logLifecycle('on did load succeed');
+  }
+
+  @protected
+  FutureOr<State> _fetchState() async {
     final completer = _stateCompleter;
     bool isSync() {
       return completer.canPerformAction(_stateCompleter);
     }
 
     try {
-      final initialState = await buildState();
+      final initialState = await _retryExecutor.start();
       if (isSync()) {
         _refreshRecompleter.complete(initialState);
         completer.complete(initialState);
+        onDidLoad(AsyncData(initialState));
       }
       return initialState;
-    } catch (e) {
+    } catch (e, stk) {
       if (isSync()) {
-        completer.completeError(e);
+        onDidLoad(AsyncError(e, stk));
+        completer.completeError(e, stk);
       }
       rethrow;
     }
   }
 
   FutureOr<State> _build() async {
+    final callLoad = !_initialized;
     _beforeBuild();
+    if (callLoad) {
+      onWillLoad();
+    }
     ref.onDispose(() {
+      /// Order
+      /// 1. state completers
+      /// 2. retry executors
       _stateCompleter.cancel();
       _stateCompleter = _createCompleter();
+      _retryExecutor.cancel();
+      _retryExecutor = _createRetryExecutor();
       if (_refreshRecompleter.isCompleted) {
+        onWillLoad();
         _refreshRecompleter = _createCompleter();
       }
     });
-    return await fetchState();
+    return await _fetchState();
   }
 
   @protected

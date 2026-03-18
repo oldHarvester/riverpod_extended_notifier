@@ -26,7 +26,7 @@ mixin ExtendedProviderNotifierMixinBase<
 
   int _listeners = 0;
 
-  bool _initialized = true;
+  bool _initialized = false;
 
   int get listeners => _listeners;
 
@@ -36,23 +36,78 @@ mixin ExtendedProviderNotifierMixinBase<
 
   bool get disposed => _initialized && !hasListeners;
 
+  bool get debugLifecycle => true;
+
+  final CustomLogger _logger = CustomLogger(owner: 'ExtendedNotifier');
+
+  void _logLifecycle(String name) {
+    if (debugLifecycle) {
+      _logger.log(name);
+    }
+  }
+
+  @protected
   bool updateShouldNotify(State previous, State next);
 
+  @protected
   void listenSelf(
     void Function(State? previous, State next) listener, {
     void Function(Object error, StackTrace stackTrace)? onError,
   });
 
+  @protected
+  void onWillDispose() {
+    _logLifecycle('will dispose');
+  }
+
+  @protected
+  void onDidDisposed() {
+    _logLifecycle('did disposed');
+  }
+
+  @protected
+  void onCreated() {
+    _logLifecycle('on created');
+  }
+
+  @protected
+  void onWillLoad() {
+    _logLifecycle('on will load');
+  }
+
+  @protected
+  void onDidLoad(State state) {
+    _logLifecycle('on did load');
+  }
+
+  @protected
+  void onWillInvalidate() {
+    _logLifecycle('on will invalidate');
+  }
+
   void _beforeBuild() {
-    _initialized = true;
+    if (!_initialized) {
+      onCreated();
+      _initialized = true;
+    }
     ref.onDispose(() {
-      if (!hasListeners) {}
+      if (!hasListeners) {
+        onDidDisposed();
+      } else {
+        onWillInvalidate();
+      }
     });
     ref.onAddListener(() {
       _listeners++;
+      if (!hasListeners) {
+        onWillDispose();
+      }
     });
     ref.onRemoveListener(() {
       _listeners--;
+      if (!hasListeners) {
+        onWillDispose();
+      }
     });
   }
 }
