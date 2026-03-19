@@ -141,6 +141,7 @@ mixin ExtendedAsyncNotifierBase<
       return initialState;
     } catch (e, stk) {
       if (isSync()) {
+        _refreshRecompleter.completeError(e, stk);
         onDidLoad(AsyncError(e, stk));
         completer.completeError(e, stk);
       }
@@ -149,12 +150,15 @@ mixin ExtendedAsyncNotifierBase<
   }
 
   FutureOr<State> _build() async {
-    final callLoad = !_initialized;
+    final initial = !_initialized;
     _beforeBuild();
-    if (callLoad) {
-      onWillLoad();
+    if (initial) {
+      onWillLoad(true);
     }
     ref.onDispose(() {
+      if (hasListeners) {
+        onInvalidate();
+      }
       /// Order
       /// 1. state completers
       /// 2. retry executors
@@ -163,7 +167,7 @@ mixin ExtendedAsyncNotifierBase<
       _retryExecutor.cancel();
       _retryExecutor = _createRetryExecutor();
       if (_refreshRecompleter.isCompleted) {
-        onWillLoad();
+        onWillLoad(false);
         _refreshRecompleter = _createCompleter();
       }
     });

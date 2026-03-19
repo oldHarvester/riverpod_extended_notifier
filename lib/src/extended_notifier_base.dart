@@ -24,17 +24,33 @@ mixin ExtendedNotifierBase<
     on ExtendedProviderNotifierMixinBase<State, Arg, ExtendedRef> {
   State buildState();
 
+  @override
+  bool get debugLifecycle => true;
+
+  State? get stateOrNull;
+
   State _build() {
     ref.onDispose(() {
       if (hasListeners) {
-        onWillLoad();
+        onInvalidate();
+        onWillLoad(false);
       }
     });
+    final initialBuild = !initialized;
+    _beforeBuild();
+    if (initialBuild) {
+      onWillLoad(true);
+    }
+    final initialState = buildState();
     try {
-      _beforeBuild();
-      return buildState();
+      return initialState;
     } finally {
-      onDidLoad(state);
+      final state = stateOrNull;
+      if (state != null) {
+        onDidLoad(state);
+      } else {
+        onDidLoad(initialState);
+      }
     }
   }
 }

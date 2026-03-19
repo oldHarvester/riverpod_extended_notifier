@@ -1,38 +1,26 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_extended_notifier/riverpod_extended_notifier.dart';
 
-final testProvider = AutoDisposeAsyncNotifierProvider<TestNotifier, List<int>>(
+final testProvider = AutoDisposeNotifierProvider<TestNotifier, List<int>>(
   () {
     return TestNotifier();
   },
 );
 
-class TestNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
-  final Duration duration = Duration(seconds: 2);
+class TestNotifier extends ExtendedAutoDisposeNotifier<List<int>> {
+  @override
+  String? get debugLabel => 'TestNotifier';
 
-  void add(int id) async {
-    executeUpdate(
-      (state) async {
-        await Future.delayed(Duration(seconds: 1));
-        return [...state, id];
-      },
+  @override
+  bool get debugLifecycle => true;
+
+  @override
+  List<int> buildState() {
+    return List.generate(
+      10,
+      (index) => Random().nextInt(10),
     );
-    await Future.delayed(duration ~/ 2);
-    ref.invalidateSelf();
-  }
-
-  @override
-  bool get disableRetries => true;
-
-  @override
-  FutureOr<List<int>> buildState() async {
-    await Future.delayed(duration);
-    if (retries < 4) {
-      throw UnimplementedError('Some error: $retries');
-    } 
-    return List.generate(5, (index) => Random().nextInt(10));
   }
 }

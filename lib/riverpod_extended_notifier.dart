@@ -38,7 +38,11 @@ mixin ExtendedProviderNotifierMixinBase<
 
   bool get debugLifecycle => false;
 
-  final CustomLogger _logger = CustomLogger(owner: 'ExtendedNotifier');
+  String? get debugLabel => null;
+
+  late final CustomLogger _logger = CustomLogger(
+    owner: debugLabel ?? 'ExtendedNotifier',
+  );
 
   void _logLifecycle(String name) {
     if (debugLifecycle) {
@@ -71,8 +75,8 @@ mixin ExtendedProviderNotifierMixinBase<
   }
 
   @protected
-  void onWillLoad() {
-    _logLifecycle('on will load');
+  void onWillLoad(bool initial) {
+    _logLifecycle('on will load: $initial');
   }
 
   @protected
@@ -81,8 +85,8 @@ mixin ExtendedProviderNotifierMixinBase<
   }
 
   @protected
-  void onWillInvalidate() {
-    _logLifecycle('on will invalidate');
+  void onInvalidate() {
+    _logLifecycle('on invalidate');
   }
 
   void _beforeBuild() {
@@ -93,8 +97,6 @@ mixin ExtendedProviderNotifierMixinBase<
     ref.onDispose(() {
       if (!hasListeners) {
         onDidDisposed();
-      } else {
-        onWillInvalidate();
       }
     });
     ref.onAddListener(() {
