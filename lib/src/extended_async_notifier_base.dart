@@ -93,6 +93,37 @@ mixin ExtendedAsyncNotifierBase<
   }
 
   @protected
+  bool stateShouldNotify(State previous, State next) {
+    return !FlexibleEquality.equals(previous, next);
+  }
+
+  @protected
+  bool errorShouldNotify(Object previous, Object next) {
+    return !FlexibleEquality.equals(previous, next);
+  }
+
+  @override
+  bool updateShouldNotify(AsyncValue<State> previous, AsyncValue<State> next) {
+    if (identical(previous, next)) {
+      return false;
+    } else if (previous.runtimeType != next.runtimeType) {
+      return true;
+    } else {
+      final oldVal = previous.valueOrNull;
+      final nextVal = next.valueOrNull;
+      final oldErr = previous.error;
+      final nextErr = next.error;
+      if (oldVal != null && nextVal != null) {
+        return stateShouldNotify(oldVal, nextVal);
+      } else if (oldErr != null && nextErr != null) {
+        return errorShouldNotify(oldErr, nextErr);
+      } else {
+        return false;
+      }
+    }
+  }
+
+  @protected
   FutureOr<bool?> shouldRetryOnError(
     int retries,
     Object error,
@@ -159,6 +190,7 @@ mixin ExtendedAsyncNotifierBase<
       if (hasListeners) {
         onInvalidate();
       }
+
       /// Order
       /// 1. state completers
       /// 2. retry executors

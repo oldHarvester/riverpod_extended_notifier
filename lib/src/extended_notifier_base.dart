@@ -29,6 +29,11 @@ mixin ExtendedNotifierBase<
 
   State? get stateOrNull;
 
+  @override
+  bool updateShouldNotify(State previous, State next) {
+    return FlexibleEquality.equals(previous, next);
+  }
+
   State _build() {
     ref.onDispose(() {
       if (hasListeners) {
