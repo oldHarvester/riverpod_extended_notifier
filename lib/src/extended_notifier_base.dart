@@ -22,6 +22,7 @@ mixin ExtendedNotifierBase<
   ExtendedRef extends Ref<State>
 >
     on ExtendedProviderNotifierMixinBase<State, Arg, ExtendedRef> {
+  @protected
   State buildState();
 
   @override

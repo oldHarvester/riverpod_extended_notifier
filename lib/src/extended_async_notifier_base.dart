@@ -57,6 +57,7 @@ mixin ExtendedAsyncNotifierBase<
               }
             : shouldRetryOnError,
         autoStart: false,
+        onRetryStarted: onRetryStarted,
         maxRetries: maxRetries,
         restartDuration: retryRestartDuration,
         timeOutDuration: retriesTimeoutDuration,
@@ -148,6 +149,11 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   void onDidLoadFailed(Object error, StackTrace stackTrace) {
     _logLifecycle('on did load failed');
+  }
+
+  @protected
+  void onRetryStarted(int retry, Object error, StackTrace stackTrace) {
+    _logLifecycle('on retry started: $retry');
   }
 
   @protected
