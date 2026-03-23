@@ -35,6 +35,14 @@ typedef AsyncNotifierUpdateOnErrorResolver<State> =
 
 typedef AsyncNotifierOnDesyncResolver<State> = void Function(State state);
 
+enum ConcurrencyStrategy {
+  /// Takes latest
+  switchMap,
+
+  /// Takes leading
+  exhaustMap,
+}
+
 mixin ExtendedAsyncNotifierBase<
   State,
   Arg extends Object?,
@@ -57,7 +65,15 @@ mixin ExtendedAsyncNotifierBase<
               }
             : shouldRetryOnError,
         autoStart: false,
-        onRetryStarted: onRetryStarted,
+        onRetryStarted: (retry, error, stackTrace) {
+          _notifyEvent(
+            AsyncNotifierRetryStartedEvent(
+              currentAttempt: retry,
+              lastError: error,
+              lastStacktrace: stackTrace,
+            ),
+          );
+        },
         maxRetries: maxRetries,
         restartDuration: retryRestartDuration,
         timeOutDuration: retriesTimeoutDuration,
@@ -76,20 +92,18 @@ mixin ExtendedAsyncNotifierBase<
     }
   }
 
+  @protected
+  ConcurrencyStrategy get concurrencyStrategy => ConcurrencyStrategy.switchMap;
+
   Future<State> get future => _refreshRecompleter.future;
 
-  @override
-  @mustCallSuper
-  void onDidLoad(AsyncValue<State> state) {
-    switch (state) {
-      case final AsyncLoading<State> _:
-        break;
-      case final AsyncError<State> _:
-        onDidLoadFailed(state.error, state.stackTrace);
-        break;
-      case final AsyncData<State> _:
-        onDidLoadSucceed(state.value);
-        break;
+  // This future will auto invalidate provider if it has error and return new future dependening on result
+  Future<State> get safeFuture {
+    if (_refreshRecompleter.isCompetedWithError) {
+      ref.invalidateSelf();
+      return _refreshRecompleter.future;
+    } else {
+      return future;
     }
   }
 
@@ -107,9 +121,10 @@ mixin ExtendedAsyncNotifierBase<
   bool updateShouldNotify(AsyncValue<State> previous, AsyncValue<State> next) {
     if (identical(previous, next)) {
       return false;
-    } else if (previous.runtimeType != next.runtimeType) {
-      return true;
     } else {
+      final prevLoading = previous.isLoading;
+      final nextLoading = next.isLoading;
+      if (prevLoading || nextLoading) return prevLoading != nextLoading;
       final oldVal = previous.valueOrNull;
       final nextVal = next.valueOrNull;
       final oldErr = previous.error;
@@ -146,19 +161,10 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   bool get disableRetries => false;
 
+  /// With this method you can override build success
   @protected
-  void onDidLoadFailed(Object error, StackTrace stackTrace) {
-    _logLifecycle('on did load failed');
-  }
-
-  @protected
-  void onRetryStarted(int retry, Object error, StackTrace stackTrace) {
-    _logLifecycle('on retry started: $retry');
-  }
-
-  @protected
-  void onDidLoadSucceed(State state) {
-    _logLifecycle('on did load succeed');
+  State resolveValue(State value, AsyncValue<State> previous) {
+    return value;
   }
 
   @protected
@@ -169,47 +175,199 @@ mixin ExtendedAsyncNotifierBase<
     }
 
     try {
-      final initialState = await _retryExecutor.start();
+      var initialValue = await _retryExecutor.start();
       if (isSync()) {
-        _refreshRecompleter.complete(initialState);
-        completer.complete(initialState);
-        onDidLoad(AsyncData(initialState));
+        final previousState = state;
+        initialValue = resolveValue(initialValue, previousState);
+        _refreshRecompleter.complete(initialValue);
+        completer.complete(initialValue);
+        final nextState = AsyncData(
+          initialValue,
+        ).copyWithPrevious(previousState);
+        _notifyEvent(
+          AsyncNotifierDidLoadEvent(
+            state: nextState,
+            previous: state,
+          ),
+        );
       }
-      return initialState;
+      return initialValue;
     } catch (e, stk) {
       if (isSync()) {
         _refreshRecompleter.completeError(e, stk);
-        onDidLoad(AsyncError(e, stk));
+        _notifyEvent(
+          AsyncNotifierLoadFailedEvent(
+            didRetries: retries,
+            error: e,
+            stackTrace: stk,
+          ),
+        );
         completer.completeError(e, stk);
       }
       rethrow;
     }
   }
 
+  void _clearCompleters() {
+    /// Order
+    /// 1. state completers
+    /// 2. retry executors
+    _stateCompleter.cancel();
+    _stateCompleter = _createCompleter();
+    _retryExecutor.cancel();
+    _retryExecutor = _createRetryExecutor();
+    if (_refreshRecompleter.isCompleted) {
+      _notifyEvent(
+        AsyncNotifierWillLoadEvent(
+          initial: false,
+          state: state,
+        ),
+      );
+      _refreshRecompleter = _createCompleter();
+    }
+  }
+
+  @protected
+  void onCreate() {}
+
+  @protected
+  void onInvalidate() {}
+
+  @protected
+  void onDispose() {}
+
+  @protected
+  void onCancel() {}
+
+  @protected
+  void onResume() {}
+
+  void _notifyEvent(AsyncNotifierEvent<State> event) {
+    if (debugEvents) {
+      _logEvents(event.debugLabel);
+    }
+    switch (event) {
+      case final AsyncNotifierCreateEvent<State> _:
+        onCreate();
+        break;
+      case final AsyncNotifierInvalidateEvent<State> _:
+        onInvalidate();
+        break;
+      case final AsyncNotifierCancelEvent<State> _:
+        onCancel();
+        break;
+      case final AsyncNotifierResumeEvent<State> _:
+        onResume();
+        break;
+      case final AsyncNotifierAddedListener<State> _:
+        break;
+      case final AsyncNotifierRemoveListener<State> _:
+        break;
+      case final AsyncNotifierDisposeEvent<State> _:
+        onDispose();
+        break;
+      case final AsyncNotifierWillLoadEvent<State> _:
+        break;
+      case final AsyncNotifierDidLoadEvent<State> _:
+        final current = event.state;
+        final previous = event.previous;
+        return current.when(
+          data: (data) {
+            _notifyEvent(
+              AsyncNotifierLoadSucceedEvent(
+                value: data,
+                previousValue: previous.valueOrNull,
+              ),
+            );
+            if (retries > 0) {
+              _notifyEvent(
+                AsyncNotifierRetrySucceedEvent(
+                  didRetries: retries,
+                  value: data,
+                ),
+              );
+            }
+          },
+          error: (error, stackTrace) {
+            _notifyEvent(
+              AsyncNotifierLoadFailedEvent(
+                didRetries: retries,
+                error: error,
+                stackTrace: stackTrace,
+              ),
+            );
+          },
+          loading: () {},
+        );
+      case final AsyncNotifierLoadSucceedEvent<State> _:
+        break;
+      case final AsyncNotifierLoadFailedEvent<State> _:
+        break;
+      case final AsyncNotifierRetryStartedEvent<State> _:
+        break;
+      case final AsyncNotifierRetryFailedEvent<State> _:
+        break;
+      case final AsyncNotifierRetrySucceedEvent<State> _:
+        break;
+    }
+  }
+
+  @override
+  void _onListenersChanged(int was, int now) {
+    if (now > was) {
+      _notifyEvent(AsyncNotifierAddedListener(total: now));
+    } else {
+      _notifyEvent(AsyncNotifierRemoveListener(total: now));
+    }
+    if (now <= 0) {
+      _notifyEvent(AsyncNotifierCancelEvent());
+    }
+  }
+
+  @protected
   FutureOr<State> _build() async {
     final initial = !_initialized;
-    _beforeBuild();
     if (initial) {
-      onWillLoad(true);
+      _notifyEvent(AsyncNotifierCreateEvent());
+      _notifyEvent(
+        AsyncNotifierWillLoadEvent(
+          initial: initial,
+          state: state,
+        ),
+      );
     }
-    ref.onDispose(() {
-      if (hasListeners) {
-        onInvalidate();
-      }
+    _beforeBuild();
+    ref.onResume(
+      () {
+        _notifyEvent(AsyncNotifierResumeEvent());
+      },
+    );
 
-      /// Order
-      /// 1. state completers
-      /// 2. retry executors
-      _stateCompleter.cancel();
-      _stateCompleter = _createCompleter();
-      _retryExecutor.cancel();
-      _retryExecutor = _createRetryExecutor();
-      if (_refreshRecompleter.isCompleted) {
-        onWillLoad(false);
-        _refreshRecompleter = _createCompleter();
-      }
-    });
-    return await _fetchState();
+    ref.onDispose(
+      () {
+        if (hasListeners) {
+          _notifyEvent(AsyncNotifierInvalidateEvent());
+        } else {
+          _notifyEvent(AsyncNotifierDisposeEvent());
+        }
+
+        switch (concurrencyStrategy) {
+          case ConcurrencyStrategy.switchMap:
+            _clearCompleters();
+            break;
+          case ConcurrencyStrategy.exhaustMap:
+            if (_refreshRecompleter.isCompleted) {
+              _clearCompleters();
+            }
+            break;
+        }
+      },
+    );
+    return switch (concurrencyStrategy) {
+      ConcurrencyStrategy.switchMap => _fetchState(),
+      ConcurrencyStrategy.exhaustMap =>
+        !_refreshRecompleter.isCompleted ? future : _fetchState(),
+    };
   }
 
   @protected

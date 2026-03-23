@@ -112,7 +112,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "2d51f324b81f0b2c06093e1e4fdf6690cfa587c8"
+      resolved-ref: c6e28cbcdc0f214ee75a1f45c5429d5aca49394d
       url: "https://github.com/oldHarvester/flutter_toolkit.git"
     source: git
     version: "0.0.3+3"

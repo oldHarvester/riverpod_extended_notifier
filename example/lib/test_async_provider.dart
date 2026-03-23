@@ -20,6 +20,9 @@ class TestAsyncNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
   @override
   bool get debugLifecycle => true;
 
+  @override
+  bool get debugEvents => true;
+
   void add(int id) async {
     executeUpdate(
       (state) async {
@@ -46,7 +49,7 @@ class TestAsyncNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
   @override
   FutureOr<List<int>> buildState() async {
     await Future.delayed(duration);
-    if (retries < 4) {
+    if (retries < 1) {
       throw UnimplementedError('Some error: $retries');
     }
     return List.generate(5, (index) => Random().nextInt(10));

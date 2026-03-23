@@ -17,6 +17,9 @@ class TestNotifier extends ExtendedAutoDisposeNotifier<List<int>> {
   bool get debugLifecycle => true;
 
   @override
+  bool get debugEvents => true;
+
+  @override
   List<int> buildState() {
     return List.generate(
       10,

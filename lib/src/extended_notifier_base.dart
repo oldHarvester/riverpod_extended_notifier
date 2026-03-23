@@ -25,9 +25,6 @@ mixin ExtendedNotifierBase<
   @protected
   State buildState();
 
-  @override
-  bool get debugLifecycle => true;
-
   State? get stateOrNull;
 
   @override
@@ -35,27 +32,102 @@ mixin ExtendedNotifierBase<
     return FlexibleEquality.equals(previous, next);
   }
 
-  State _build() {
-    ref.onDispose(() {
-      if (hasListeners) {
-        onInvalidate();
-        onWillLoad(false);
-      }
-    });
-    final initialBuild = !initialized;
-    _beforeBuild();
-    if (initialBuild) {
-      onWillLoad(true);
+  @override
+  void _onCreated() {
+    _notifyEvent(NotifierCreateEvent());
+  }
+
+  @override
+  void _onListenersChanged(int was, int now) {
+    if (now > was) {
+      _notifyEvent(NotifierAddedListenerEvent(total: now));
+    } else {
+      _notifyEvent(NotifierRemovedListenerEvent(total: now));
     }
+    if (now <= 0) {
+      _notifyEvent(NotifierCancelEvent());
+    }
+  }
+
+  void _notifyEvent(NotifierEvent<State> event) {
+    if (debugEvents) {
+      _logEvents(event.debugLabel);
+    }
+    switch (event) {
+      case NotifierCreateEvent<State> _:
+        onCreate();
+        break;
+      case NotifierWillInvalidateEvent<State> _:
+        onWillInvalidate();
+        break;
+      case NotifierDidInvalidateEvent<State> _:
+        onDidInvalidate();
+        break;
+      case NotifierCancelEvent<State> _:
+        onCancel();
+        break;
+      case NotifierResumeEvent<State> _:
+        onResume();
+        break;
+      case NotifierAddedListenerEvent<State> _:
+        break;
+      case NotifierRemovedListenerEvent<State> _:
+        break;
+      case NotifierDisposeEvent<State> _:
+        onDispose();
+        break;
+    }
+  }
+
+  @protected
+  void onCreate() {}
+
+  @protected
+  void onWillInvalidate() {}
+
+  @protected
+  void onDidInvalidate() {}
+
+  @protected
+  void onDispose() {}
+
+  @protected
+  void onCancel() {}
+
+  @protected
+  void onResume() {}
+
+  State _build() {
+    ref.onDispose(
+      () {
+        if (hasListeners) {
+          _notifyEvent(
+            NotifierWillInvalidateEvent(),
+          );
+        } else {
+          _notifyEvent(NotifierDisposeEvent());
+        }
+      },
+    );
+    ref.onResume(
+      () {
+        _notifyEvent(NotifierResumeEvent());
+      },
+    );
+    final initialBuild = !_initialized;
+    _beforeBuild();
     final initialState = buildState();
+    final previousState = stateOrNull;
     try {
       return initialState;
     } finally {
-      final state = stateOrNull;
-      if (state != null) {
-        onDidLoad(state);
-      } else {
-        onDidLoad(initialState);
+      if (!initialBuild) {
+        _notifyEvent(
+          NotifierDidInvalidateEvent(
+            previous: previousState,
+            state: initialState,
+          ),
+        );
       }
     }
   }

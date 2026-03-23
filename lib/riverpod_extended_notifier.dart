@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_toolkit/flutter_toolkit.dart';
+import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
 part 'src/notifiers/notifier.dart';
 part 'src/notifiers/family_notifier.dart';
@@ -12,6 +13,13 @@ part 'src/extended_async_notifier_base.dart';
 part 'src/extended_notifier_base.dart';
 
 class ExtendedAsyncNotifierSyncException implements Exception {}
+
+enum NotifierLifecycleState {
+  idle,
+  paused,
+  working,
+  disposed,
+}
 
 mixin ExtendedProviderNotifierMixinBase<
   State,
@@ -36,22 +44,39 @@ mixin ExtendedProviderNotifierMixinBase<
 
   bool get disposed => _initialized && !hasListeners;
 
+  bool get debugEvents => false;
+
   bool get debugLifecycle => false;
 
   String? get debugLabel => null;
+
+  NotifierLifecycleState _lifecycleState = NotifierLifecycleState.idle;
+
+  NotifierLifecycleState get lifecycleState => _lifecycleState;
 
   late final CustomLogger _logger = CustomLogger(
     owner: debugLabel ?? 'ExtendedNotifier',
   );
 
-  void _logLifecycle(String name) {
-    if (debugLifecycle) {
+  void _logEvents(String name) {
+    if (debugEvents) {
       _logger.log(name);
+    }
+  }
+
+  void _logLifecycle(NotifierLifecycleState state) {
+    if (debugLifecycle) {
+      _logger.log('lifecycle changed - ${state.name}');
     }
   }
 
   @protected
   bool updateShouldNotify(State previous, State next);
+
+  void onLifecycleChanged(
+    NotifierLifecycleState previous,
+    NotifierLifecycleState next,
+  ) {}
 
   @protected
   void listenSelf(
@@ -60,56 +85,49 @@ mixin ExtendedProviderNotifierMixinBase<
   });
 
   @protected
-  void onWillDispose() {
-    _logLifecycle('will dispose');
-  }
+  void _onCreated() {}
 
-  @protected
-  void onDidDisposed() {
-    _logLifecycle('did disposed');
-  }
+  void _onListenersChanged(int was, int now) {}
 
-  @protected
-  void onCreated() {
-    _logLifecycle('on created');
-  }
-
-  @protected
-  void onWillLoad(bool initial) {
-    _logLifecycle('on will load: $initial');
-  }
-
-  @protected
-  void onDidLoad(State state) {
-    _logLifecycle('on did load');
-  }
-
-  @protected
-  void onInvalidate() {
-    _logLifecycle('on invalidate');
+  void _changeLifecycle(NotifierLifecycleState state) {
+    final previous = _lifecycleState;
+    if (previous != state) {
+      _lifecycleState = state;
+      onLifecycleChanged(previous, state);
+      _logLifecycle(state);
+    }
   }
 
   void _beforeBuild() {
     if (!_initialized) {
-      onCreated();
+      _onCreated();
+      _changeLifecycle(NotifierLifecycleState.working);
       _initialized = true;
     }
-    ref.onDispose(() {
-      if (!hasListeners) {
-        onDidDisposed();
-      }
-    });
-    ref.onAddListener(() {
-      _listeners++;
-      if (!hasListeners) {
-        onWillDispose();
-      }
-    });
-    ref.onRemoveListener(() {
-      _listeners--;
-      if (!hasListeners) {
-        onWillDispose();
-      }
-    });
+    ref.onAddListener(
+      () {
+        _onListenersChanged(_listeners, ++_listeners);
+      },
+    );
+    ref.onDispose(
+      () {
+        if (!hasListeners) {
+          _changeLifecycle(NotifierLifecycleState.disposed);
+        }
+      },
+    );
+    ref.onResume(
+      () {
+        _changeLifecycle(NotifierLifecycleState.working);
+      },
+    );
+    ref.onRemoveListener(
+      () {
+        _onListenersChanged(_listeners, --_listeners);
+        if (!hasListeners) {
+          _changeLifecycle(NotifierLifecycleState.paused);
+        }
+      },
+    );
   }
 }

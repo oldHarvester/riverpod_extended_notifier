@@ -73,7 +73,7 @@ class _ExamplePageState extends ConsumerState<ExamplePage> {
   @override
   Widget build(BuildContext context) {
     final testAsyncState = ref.watch(testAsyncProvider);
-    final testAsyncController = ref.watch(testAsyncProvider.notifier);
+    final testAsyncController = ref.read(testAsyncProvider.notifier);
     final testSyncState = ref.watch(testProvider);
     // final testSyncController = ref.watch(testProvider.notifier);
     return Scaffold(
