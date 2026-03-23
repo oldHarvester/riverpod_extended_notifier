@@ -242,10 +242,14 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   void onResume() {}
 
+  @protected
+  void onEvent(AsyncNotifierEvent<State> event) {}
+
   void _notifyEvent(AsyncNotifierEvent<State> event) {
     if (debugEvents) {
       _logEvents(event.debugLabel);
     }
+    onEvent(event);
     switch (event) {
       case final AsyncNotifierCreateEvent<State> _:
         onCreate();

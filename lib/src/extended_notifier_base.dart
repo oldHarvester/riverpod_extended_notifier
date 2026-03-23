@@ -49,10 +49,13 @@ mixin ExtendedNotifierBase<
     }
   }
 
+  void onEvent(NotifierEvent<State> event) {}
+
   void _notifyEvent(NotifierEvent<State> event) {
     if (debugEvents) {
       _logEvents(event.debugLabel);
     }
+    onEvent(event);
     switch (event) {
       case NotifierCreateEvent<State> _:
         onCreate();
