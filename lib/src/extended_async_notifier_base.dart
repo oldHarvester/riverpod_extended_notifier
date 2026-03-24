@@ -367,6 +367,7 @@ mixin ExtendedAsyncNotifierBase<
         }
       },
     );
+
     return switch (concurrencyStrategy) {
       ConcurrencyStrategy.switchMap => _fetchState(),
       ConcurrencyStrategy.exhaustMap =>
@@ -379,8 +380,16 @@ mixin ExtendedAsyncNotifierBase<
     AsyncNotifierUpdateResolverOrNull<State> cb, {
     AsyncNotifierUpdateOnErrorResolver? onError,
     AsyncNotifierOnDesyncResolver<State>? onDesync,
+    bool skipReloading = true,
+    bool skipRefreshing = true,
   }) async {
-    final result = await updateOrNull(cb);
+    final result = await updateOrNull(
+      cb,
+      onDesync: onDesync,
+      onError: onError,
+      skipRefreshing: skipRefreshing,
+      skipReloading: skipReloading,
+    );
     return result != null;
   }
 
@@ -389,6 +398,8 @@ mixin ExtendedAsyncNotifierBase<
     AsyncNotifierUpdateResolverOrNull<State> cb, {
     AsyncNotifierUpdateOnErrorResolver? onError,
     AsyncNotifierOnDesyncResolver<State>? onDesync,
+    bool skipReloading = true,
+    bool skipRefreshing = true,
   }) async {
     try {
       return await update(
@@ -399,6 +410,8 @@ mixin ExtendedAsyncNotifierBase<
         },
         onError: onError,
         onDesync: onDesync,
+        skipRefreshing: skipRefreshing,
+        skipReloading: skipReloading,
       );
     } catch (e) {
       return null;
@@ -410,6 +423,8 @@ mixin ExtendedAsyncNotifierBase<
     AsyncNotifierUpdateResolver<State> cb, {
     AsyncNotifierUpdateOnErrorResolver? onError,
     AsyncNotifierOnDesyncResolver<State>? onDesync,
+    bool skipReloading = true,
+    bool skipRefreshing = true,
   }) async {
     final completer = _refreshRecompleter;
     final unsyncException = ExtendedAsyncNotifierSyncException();
@@ -418,10 +433,15 @@ mixin ExtendedAsyncNotifierBase<
     }
 
     try {
-      final tempState = state.valueOrNull;
-      final result = completer.isCompleted && tempState != null
-          ? tempState
-          : await completer.future;
+      final tempState = state.when(
+        skipError: true,
+        skipLoadingOnRefresh: skipRefreshing,
+        skipLoadingOnReload: skipReloading,
+        data: (data) => data,
+        error: (error, stackTrace) => null,
+        loading: () => null,
+      );
+      final result = tempState ?? await completer.future;
 
       if (isSync()) {
         final updated = await cb(result);
