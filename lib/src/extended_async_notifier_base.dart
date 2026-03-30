@@ -52,6 +52,7 @@ mixin ExtendedAsyncNotifierBase<
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
+  final FlexibleEquality _equality = FlexibleEquality();
 
   FlexibleCompleter<State> _createCompleter() =>
       FlexibleCompleter()..future.ignore();
@@ -109,12 +110,12 @@ mixin ExtendedAsyncNotifierBase<
 
   @protected
   bool stateShouldNotify(State previous, State next) {
-    return !FlexibleEquality.equals(previous, next);
+    return _equality.notEquals(previous, next);
   }
 
   @protected
   bool errorShouldNotify(Object previous, Object next) {
-    return !FlexibleEquality.equals(previous, next);
+    return _equality.notEquals(previous, next);
   }
 
   @override

@@ -27,9 +27,11 @@ mixin ExtendedNotifierBase<
 
   State? get stateOrNull;
 
+  final FlexibleEquality _equality = FlexibleEquality();
+
   @override
   bool updateShouldNotify(State previous, State next) {
-    return FlexibleEquality.equals(previous, next);
+    return _equality.equals(previous, next);
   }
 
   @override
