@@ -221,7 +221,7 @@ mixin ExtendedAsyncNotifierBase<
       _notifyEvent(
         AsyncNotifierWillLoadEvent(
           initial: false,
-          state: null,
+          state: null, /// TODO: must be `state`, need to resolve concurrent modification
         ),
       );
       _refreshRecompleter = _createCompleter();
