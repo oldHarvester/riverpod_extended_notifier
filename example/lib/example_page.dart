@@ -14,7 +14,7 @@ class _ExamplePageState extends ConsumerState<ExamplePage> {
   @override
   void initState() {
     super.initState();
-    ref.read(testAsyncProvider.notifier).add(10);
+    // ref.read(testAsyncProvider.notifier).add(10);
   }
 
   Widget buildView({
@@ -27,32 +27,41 @@ class _ExamplePageState extends ConsumerState<ExamplePage> {
         slivers: [
           SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(
-              child: state.when(
-                skipError: false,
-                skipLoadingOnRefresh: false,
-                skipLoadingOnReload: false,
-                error: (error, stackTrace) {
-                  return Text(
-                    error.toString(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                    ),
-                  );
-                },
-                loading: () {
-                  return SizedBox.square(
-                    dimension: 30,
-                    child: CircularProgressIndicator(),
-                  );
-                },
-                data: (data) {
-                  return Text(
-                    data.join(', '),
-                  );
-                },
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                state.when(
+                  skipError: false,
+                  skipLoadingOnRefresh: false,
+                  skipLoadingOnReload: false,
+                  error: (error, stackTrace) {
+                    return Text(
+                      error.toString(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    );
+                  },
+                  loading: () {
+                    return SizedBox.square(
+                      dimension: 30,
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                  data: (data) {
+                    return Text(
+                      data.join(', '),
+                    );
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: onRefresh,
+                  child: Text(
+                    'on refresh',
+                  ),
+                ),
+              ],
             ),
           ),
         ],
