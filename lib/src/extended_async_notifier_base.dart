@@ -221,7 +221,7 @@ mixin ExtendedAsyncNotifierBase<
       _notifyEvent(
         AsyncNotifierWillLoadEvent(
           initial: false,
-          state: state,
+          state: null,
         ),
       );
       _refreshRecompleter = _createCompleter();
