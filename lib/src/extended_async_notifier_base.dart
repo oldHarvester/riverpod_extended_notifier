@@ -218,12 +218,17 @@ mixin ExtendedAsyncNotifierBase<
     _retryExecutor.cancel();
     _retryExecutor = _createRetryExecutor();
     if (_refreshRecompleter.isCompleted) {
-      _notifyEvent(
-        AsyncNotifierWillLoadEvent(
-          initial: false,
-          state: null, /// TODO: must be `state`, need to resolve concurrent modification
-        ),
-      );
+      if (!disposed) {
+        _notifyEvent(
+          AsyncNotifierWillLoadEvent(
+            initial: false,
+            state: null,
+
+            /// TODO: must be `state`, need to resolve concurrent modification
+          ),
+        );
+      }
+      // TODO: maybe also do not need to create new completer (need to test)
       _refreshRecompleter = _createCompleter();
     }
   }
