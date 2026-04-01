@@ -9,6 +9,9 @@ class NotifierCreateEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'create';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NotifierWillInvalidateEvent<State> extends NotifierEvent<State> {
@@ -16,6 +19,9 @@ class NotifierWillInvalidateEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'will invalidate';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NotifierDidInvalidateEvent<State> extends NotifierEvent<State> {
@@ -29,6 +35,9 @@ class NotifierDidInvalidateEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'did invalidate';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NotifierCancelEvent<State> extends NotifierEvent<State> {
@@ -36,6 +45,9 @@ class NotifierCancelEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'cancel';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NotifierResumeEvent<State> extends NotifierEvent<State> {
@@ -43,6 +55,9 @@ class NotifierResumeEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'resume';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NotifierAddedListenerEvent<State> extends NotifierEvent<State> {
@@ -51,6 +66,9 @@ class NotifierAddedListenerEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'added listener ($total)';
+
+  @override
+  List<Object?> get props => [total];
 }
 
 class NotifierRemovedListenerEvent<State> extends NotifierEvent<State> {
@@ -59,6 +77,9 @@ class NotifierRemovedListenerEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'removed listener ($total)';
+
+  @override
+  List<Object?> get props => [total];
 }
 
 class NotifierDisposeEvent<State> extends NotifierEvent<State> {
@@ -66,4 +87,7 @@ class NotifierDisposeEvent<State> extends NotifierEvent<State> {
 
   @override
   String get debugLabel => 'dispose';
+
+  @override
+  List<Object?> get props => [];
 }

@@ -5,21 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_toolkit/flutter_toolkit.dart';
 import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
+export 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
+
 part 'src/notifiers/notifier.dart';
 part 'src/notifiers/family_notifier.dart';
 part 'src/notifiers/async_notifier.dart';
 part 'src/notifiers/family_async_notifier.dart';
 part 'src/extended_async_notifier_base.dart';
 part 'src/extended_notifier_base.dart';
-
-class ExtendedAsyncNotifierSyncException implements Exception {}
-
-enum NotifierLifecycleState {
-  idle,
-  paused,
-  working,
-  disposed,
-}
+part 'src/exceptions/exceptions.dart';
 
 mixin ExtendedProviderNotifierMixinBase<
   State,
@@ -73,10 +67,7 @@ mixin ExtendedProviderNotifierMixinBase<
   @protected
   bool updateShouldNotify(State previous, State next);
 
-  void onLifecycleChanged(
-    NotifierLifecycleState previous,
-    NotifierLifecycleState next,
-  ) {}
+  void onLifecycleChanged(NotifierLifecycleChangeEvent event) {}
 
   @protected
   void listenSelf(
@@ -93,7 +84,12 @@ mixin ExtendedProviderNotifierMixinBase<
     final previous = _lifecycleState;
     if (previous != state) {
       _lifecycleState = state;
-      onLifecycleChanged(previous, state);
+      onLifecycleChanged(
+        NotifierLifecycleChangeEvent<State>(
+          previous: previous,
+          next: state,
+        ),
+      );
       _logLifecycle(state);
     }
   }

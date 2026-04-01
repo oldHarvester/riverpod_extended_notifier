@@ -9,6 +9,9 @@ class AsyncNotifierCreateEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'create';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AsyncNotifierInvalidateEvent<State> extends AsyncNotifierEvent<State> {
@@ -16,6 +19,9 @@ class AsyncNotifierInvalidateEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'invalidate';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AsyncNotifierCancelEvent<State> extends AsyncNotifierEvent<State> {
@@ -23,6 +29,9 @@ class AsyncNotifierCancelEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'cancel';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AsyncNotifierResumeEvent<State> extends AsyncNotifierEvent<State> {
@@ -30,6 +39,9 @@ class AsyncNotifierResumeEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'resume';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AsyncNotifierAddedListener<State> extends AsyncNotifierEvent<State> {
@@ -38,6 +50,9 @@ class AsyncNotifierAddedListener<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'added listener ($total)';
+
+  @override
+  List<Object?> get props => [total];
 }
 
 class AsyncNotifierRemoveListener<State> extends AsyncNotifierEvent<State> {
@@ -46,6 +61,9 @@ class AsyncNotifierRemoveListener<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'removed listener ($total)';
+
+  @override
+  List<Object?> get props => [total];
 }
 
 class AsyncNotifierDisposeEvent<State> extends AsyncNotifierEvent<State> {
@@ -53,6 +71,9 @@ class AsyncNotifierDisposeEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'dispose';
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AsyncNotifierWillLoadEvent<State> extends AsyncNotifierEvent<State> {
@@ -66,6 +87,9 @@ class AsyncNotifierWillLoadEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'will load';
+
+  @override
+  List<Object?> get props => [initial, state];
 }
 
 class AsyncNotifierDidLoadEvent<State> extends AsyncNotifierEvent<State> {
@@ -79,6 +103,9 @@ class AsyncNotifierDidLoadEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'did load';
+
+  @override
+  List<Object?> get props => [state, previous];
 }
 
 class AsyncNotifierLoadSucceedEvent<State> extends AsyncNotifierEvent<State> {
@@ -86,12 +113,15 @@ class AsyncNotifierLoadSucceedEvent<State> extends AsyncNotifierEvent<State> {
     required this.value,
     this.previousValue,
   });
-  
+
   final State? previousValue;
   final State value;
 
   @override
   String get debugLabel => 'load succeed event';
+
+  @override
+  List<Object?> get props => [previousValue, value];
 }
 
 class AsyncNotifierLoadFailedEvent<State> extends AsyncNotifierEvent<State> {
@@ -107,6 +137,9 @@ class AsyncNotifierLoadFailedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'load failed event';
+
+  @override
+  List<Object?> get props => [didRetries, error, stackTrace];
 }
 
 class AsyncNotifierRetryStartedEvent<State> extends AsyncNotifierEvent<State> {
@@ -122,6 +155,13 @@ class AsyncNotifierRetryStartedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'retry started ($currentAttempt)';
+
+  @override
+  List<Object?> get props => [
+    currentAttempt,
+    lastError,
+    lastStacktrace,
+  ];
 }
 
 class AsyncNotifierRetryFailedEvent<State> extends AsyncNotifierEvent<State> {
@@ -137,6 +177,9 @@ class AsyncNotifierRetryFailedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'retry failed';
+  
+  @override
+  List<Object?> get props => [didRetries, error, stackTrace];
 }
 
 class AsyncNotifierRetrySucceedEvent<State> extends AsyncNotifierEvent<State> {
@@ -150,4 +193,7 @@ class AsyncNotifierRetrySucceedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'retry succeed ($didRetries)';
+  
+  @override
+  List<Object?> get props => [didRetries, value];
 }
