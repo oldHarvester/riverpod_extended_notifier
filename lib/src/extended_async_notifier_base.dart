@@ -98,6 +98,10 @@ mixin ExtendedAsyncNotifierBase<
 
   Future<State> get future => _refreshRecompleter.future;
 
+  bool get isRefreshing => !_refreshRecompleter.isCompleted;
+
+  bool refreshOnAttach(Object error, StackTrace? stackTrace) => true;
+
   // This future will auto invalidate provider if it has error and return new future dependening on result
   Future<State> get safeFuture {
     if (_refreshRecompleter.isCompetedWithError) {
@@ -166,6 +170,18 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   State resolveValue(State value, AsyncValue<State> previous) {
     return value;
+  }
+
+  void _checkUpdateOnAttach() {
+    if (isRefreshing) return;
+    final error = state.error;
+    final stackTrace = state.stackTrace;
+    if (error != null) {
+      final refresh = refreshOnAttach(error, stackTrace);
+      if (refresh) {
+        ref.invalidateSelf();
+      }
+    }
   }
 
   @protected
@@ -268,8 +284,10 @@ mixin ExtendedAsyncNotifierBase<
         break;
       case final AsyncNotifierResumeEvent<State> _:
         onResume();
+        _checkUpdateOnAttach();
         break;
       case final AsyncNotifierAddedListener<State> _:
+        _checkUpdateOnAttach();
         break;
       case final AsyncNotifierRemoveListener<State> _:
         break;
