@@ -6,6 +6,8 @@ import 'package:flutter_toolkit/flutter_toolkit.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
+import 'src/clever_widgets_binding.dart';
+
 export 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
 part 'src/notifiers/notifier.dart';

@@ -229,7 +229,13 @@ mixin ExtendedAsyncNotifierBase<
     if (error != null && errorRefreshTriggers.contains(trigger)) {
       final result = willTriggerErrorRefresh(error, stackTrace, trigger);
       if (result) {
-        ref.invalidateSelf();
+        CleverWidgetsBinding.executeFrame(
+          () {
+            if (!disposed) {
+              ref.invalidateSelf();
+            }
+          },
+        );
       }
     }
   }
