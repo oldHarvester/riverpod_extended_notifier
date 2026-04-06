@@ -177,7 +177,7 @@ class AsyncNotifierRetryFailedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'retry failed';
-  
+
   @override
   List<Object?> get props => [didRetries, error, stackTrace];
 }
@@ -193,7 +193,22 @@ class AsyncNotifierRetrySucceedEvent<State> extends AsyncNotifierEvent<State> {
 
   @override
   String get debugLabel => 'retry succeed ($didRetries)';
-  
+
   @override
   List<Object?> get props => [didRetries, value];
+}
+
+class AsyncNotifierInternetStatusChangedEvent<State>
+    extends AsyncNotifierEvent<State> {
+  const AsyncNotifierInternetStatusChangedEvent({
+    required this.status,
+  });
+  
+  final InternetStatus status;
+  
+  @override
+  String get debugLabel => 'internet status changed: $status';
+  
+  @override
+  List<Object?> get props => [status];
 }

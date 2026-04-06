@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_toolkit/flutter_toolkit.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
 export 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
@@ -14,6 +15,7 @@ part 'src/notifiers/family_async_notifier.dart';
 part 'src/extended_async_notifier_base.dart';
 part 'src/extended_notifier_base.dart';
 part 'src/exceptions/exceptions.dart';
+part 'src/providers/internet_connection_checker_provider.dart';
 
 mixin ExtendedProviderNotifierMixinBase<
   State,

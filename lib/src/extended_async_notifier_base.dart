@@ -1,5 +1,11 @@
 part of '../riverpod_extended_notifier.dart';
 
+extension InternetStatusX on InternetStatus {
+  bool get connected => this == InternetStatus.connected;
+
+  bool get disconnected => this == InternetStatus.disconnected;
+}
+
 typedef ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg extends Object?> =
     ExtendedProviderNotifierMixinBase<
       AsyncValue<State>,
@@ -43,6 +49,16 @@ enum ConcurrencyStrategy {
   exhaustMap,
 }
 
+enum ErrorRefreshTrigger {
+  onResume,
+  onAddedListener,
+  onInternetGained,
+}
+
+enum RefreshTrigger {
+  onResume,
+}
+
 mixin ExtendedAsyncNotifierBase<
   State,
   Arg extends Object?,
@@ -51,15 +67,24 @@ mixin ExtendedAsyncNotifierBase<
     on ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg, ExtendedRef> {
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
+  late FlexibleCompleter<void> _connectionCompleter = _createCompleter()
+    ..complete();
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
   final FlexibleEquality _equality = FlexibleEquality();
 
-  FlexibleCompleter<State> _createCompleter() =>
-      FlexibleCompleter()..future.ignore();
+  FlexibleCompleter<T> _createCompleter<T>() =>
+      FlexibleCompleter<T>()..future.ignore();
+
+  Future<void> get _connectionWaiter => _connectionCompleter.future;
 
   AutoRestartExecutor<State> _createRetryExecutor() =>
       AutoRestartExecutor<State>(
-        handler: buildState,
+        handler: () async {
+          if (keepLoadingWhileConnecting) {
+            await _connectionWaiter;
+          }
+          return buildState();
+        },
         onError: disableRetries
             ? (retries, error, stk) {
                 return false;
@@ -96,11 +121,20 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   ConcurrencyStrategy get concurrencyStrategy => ConcurrencyStrategy.switchMap;
 
+  @protected
+  Set<ErrorRefreshTrigger> errorRefreshTriggers = {
+    ErrorRefreshTrigger.onResume,
+    ErrorRefreshTrigger.onAddedListener,
+    ErrorRefreshTrigger.onInternetGained,
+  };
+
+  @protected
+  Set<RefreshTrigger> refreshTriggers = {};
+
   Future<State> get future => _refreshRecompleter.future;
 
+  @protected
   bool get isRefreshing => !_refreshRecompleter.isCompleted;
-
-  bool refreshOnAttach(Object error, StackTrace? stackTrace) => true;
 
   // This future will auto invalidate provider if it has error and return new future dependening on result
   Future<State> get safeFuture {
@@ -121,6 +155,13 @@ mixin ExtendedAsyncNotifierBase<
   bool errorShouldNotify(Object previous, Object next) {
     return _equality.notEquals(previous, next);
   }
+
+  @protected
+  bool willTriggerErrorRefresh(
+    Object error,
+    StackTrace? stackTrace,
+    ErrorRefreshTrigger trigger,
+  ) => true;
 
   @override
   bool updateShouldNotify(AsyncValue<State> previous, AsyncValue<State> next) {
@@ -154,6 +195,11 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
 
+  InternetStatus _internetStatus = InternetStatus.connected;
+
+  @protected
+  InternetStatus get internetStatus => _internetStatus;
+
   @protected
   Duration? get retriesTimeoutDuration => null;
 
@@ -166,21 +212,31 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   bool get disableRetries => false;
 
+  @protected
+  bool get keepLoadingWhileConnecting => false;
+
   /// With this method you can override build success
   @protected
   State resolveValue(State value, AsyncValue<State> previous) {
     return value;
   }
 
-  void _checkUpdateOnAttach() {
+  void _resolveErrorRefreshTrigger(ErrorRefreshTrigger trigger) {
     if (isRefreshing) return;
     final error = state.error;
     final stackTrace = state.stackTrace;
-    if (error != null) {
-      final refresh = refreshOnAttach(error, stackTrace);
-      if (refresh) {
+    if (error != null && errorRefreshTriggers.contains(trigger)) {
+      final result = willTriggerErrorRefresh(error, stackTrace, trigger);
+      if (result) {
         ref.invalidateSelf();
       }
+    }
+  }
+
+  void _resolveRefreshTrigger(RefreshTrigger trigger) {
+    if (isRefreshing) return;
+    if (refreshTriggers.contains(trigger)) {
+      ref.invalidateSelf();
     }
   }
 
@@ -238,9 +294,9 @@ mixin ExtendedAsyncNotifierBase<
         _notifyEvent(
           AsyncNotifierWillLoadEvent(
             initial: false,
-            state: null,
 
             /// TODO: must be `state`, need to resolve concurrent modification
+            state: null,
           ),
         );
       }
@@ -267,6 +323,23 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
 
+  void _onInternetStatusChanged(InternetStatus status) {
+    if (status.disconnected && _connectionCompleter.isCompleted) {
+      _connectionCompleter = FlexibleCompleter();
+    } else if (status.connected) {
+      _connectionCompleter.complete();
+    }
+    _notifyEvent(
+      AsyncNotifierInternetStatusChangedEvent(
+        status: status,
+      ),
+    );
+    _internetStatus = status;
+    if (status.connected) {
+      _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onInternetGained);
+    }
+  }
+
   void _notifyEvent(AsyncNotifierEvent<State> event) {
     if (debugEvents) {
       _logEvents(event.debugLabel);
@@ -275,6 +348,9 @@ mixin ExtendedAsyncNotifierBase<
     switch (event) {
       case final AsyncNotifierCreateEvent<State> _:
         onCreate();
+        _internetStatus = ref.read(internetStatusProvider);
+        break;
+      case final AsyncNotifierInternetStatusChangedEvent<State> _:
         break;
       case final AsyncNotifierInvalidateEvent<State> _:
         onInvalidate();
@@ -284,10 +360,11 @@ mixin ExtendedAsyncNotifierBase<
         break;
       case final AsyncNotifierResumeEvent<State> _:
         onResume();
-        _checkUpdateOnAttach();
+        _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onResume);
+        _resolveRefreshTrigger(RefreshTrigger.onResume);
         break;
       case final AsyncNotifierAddedListener<State> _:
-        _checkUpdateOnAttach();
+        _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onAddedListener);
         break;
       case final AsyncNotifierRemoveListener<State> _:
         break;
@@ -300,6 +377,9 @@ mixin ExtendedAsyncNotifierBase<
         final current = event.state;
         final previous = event.previous;
         return current.when(
+          skipError: false,
+          skipLoadingOnRefresh: false,
+          skipLoadingOnReload: false,
           data: (data) {
             _notifyEvent(
               AsyncNotifierLoadSucceedEvent(
@@ -355,6 +435,12 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   FutureOr<State> _build() async {
     final initial = !_initialized;
+    ref.listen(
+      internetStatusProvider,
+      (previous, next) {
+        _onInternetStatusChanged(next);
+      },
+    );
     if (initial) {
       _notifyEvent(AsyncNotifierCreateEvent());
       _notifyEvent(
@@ -378,7 +464,6 @@ mixin ExtendedAsyncNotifierBase<
         } else {
           _notifyEvent(AsyncNotifierDisposeEvent());
         }
-
         switch (concurrencyStrategy) {
           case ConcurrencyStrategy.switchMap:
             _clearCompleters();
