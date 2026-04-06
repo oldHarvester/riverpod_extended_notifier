@@ -67,8 +67,9 @@ mixin ExtendedAsyncNotifierBase<
     on ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg, ExtendedRef> {
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
-  late FlexibleCompleter<void> _connectionCompleter = _createCompleter()
-    ..complete();
+  late FlexibleCompleter<void> _connectionCompleter = internetStatus.connected
+      ? (_createCompleter()..complete())
+      : _createCompleter();
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
   final FlexibleEquality _equality = FlexibleEquality();
 
