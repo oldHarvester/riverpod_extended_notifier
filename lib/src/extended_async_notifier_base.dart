@@ -51,7 +51,6 @@ enum ConcurrencyStrategy {
 
 enum ErrorRefreshTrigger {
   onResume,
-  onAddedListener,
   onInternetGained,
 }
 
@@ -125,7 +124,6 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Set<ErrorRefreshTrigger> errorRefreshTriggers = {
     ErrorRefreshTrigger.onResume,
-    ErrorRefreshTrigger.onAddedListener,
     ErrorRefreshTrigger.onInternetGained,
   };
 
@@ -371,7 +369,6 @@ mixin ExtendedAsyncNotifierBase<
         _resolveRefreshTrigger(RefreshTrigger.onResume);
         break;
       case final AsyncNotifierAddedListener<State> _:
-        _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onAddedListener);
         break;
       case final AsyncNotifierRemoveListener<State> _:
         break;
