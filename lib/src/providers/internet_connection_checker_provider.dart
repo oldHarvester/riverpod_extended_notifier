@@ -17,9 +17,13 @@ final internetStatusProvider =
 
 class InternetStatusNotifier extends ExtendedNotifier<InternetStatus> {
   StreamSubscription<InternetStatus>? _connectionSub;
+  final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
 
   void _onStatusChanged(InternetStatus status) {
-    state = status;
+    if (status != state) {
+      state = status;
+    }
+    logger.log(status.name);
   }
 
   @override
