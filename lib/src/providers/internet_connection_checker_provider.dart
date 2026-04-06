@@ -9,13 +9,14 @@ final internetConnectionCheckerProvider = Provider<InternetConnection>(
 );
 
 final internetStatusProvider =
-    AutoDisposeNotifierProvider<InternetStatusNotifier, InternetStatus>(
+    NotifierProvider<InternetStatusNotifier, InternetStatus>(
       () {
         return InternetStatusNotifier();
       },
     );
 
-class InternetStatusNotifier extends ExtendedAutoDisposeNotifier<InternetStatus> {
+class InternetStatusNotifier
+    extends ExtendedNotifier<InternetStatus> {
   StreamSubscription<InternetStatus>? _connectionSub;
   final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
 
