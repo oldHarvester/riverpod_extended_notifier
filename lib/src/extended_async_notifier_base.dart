@@ -194,7 +194,7 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
 
-  InternetStatus _internetStatus = InternetStatus.connected;
+  InternetStatus _internetStatus = InternetStatus.disconnected;
 
   @protected
   InternetStatus get internetStatus => _internetStatus;
