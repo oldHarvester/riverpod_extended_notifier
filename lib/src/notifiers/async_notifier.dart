@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_types_as_parameter_names
+
 part of '../../riverpod_extended_notifier.dart';
 
 abstract class ExtendedAsyncNotifier<State> extends AsyncNotifier<State>

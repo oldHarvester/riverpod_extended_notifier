@@ -9,21 +9,21 @@ final internetConnectionCheckerProvider = Provider<InternetConnection>(
 );
 
 final internetStatusProvider =
-    NotifierProvider<InternetStatusNotifier, InternetStatus>(
+    AutoDisposeNotifierProvider<InternetStatusNotifier, InternetStatus>(
       () {
         return InternetStatusNotifier();
       },
     );
 
-class InternetStatusNotifier extends ExtendedNotifier<InternetStatus> {
+class InternetStatusNotifier extends ExtendedAutoDisposeNotifier<InternetStatus> {
   StreamSubscription<InternetStatus>? _connectionSub;
   final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
 
   void _onStatusChanged(InternetStatus status) {
     if (status != state) {
       state = status;
+      logger.log(status.name);
     }
-    logger.log(status.name);
   }
 
   @override
@@ -32,16 +32,16 @@ class InternetStatusNotifier extends ExtendedNotifier<InternetStatus> {
     final checker = ref.read(internetConnectionCheckerProvider);
     _connectionSub = checker.onStatusChange.listen(
       (status) {
-        if (completer.canPerformAction(completer)) {
-          _onStatusChanged(status);
-          completer.complete();
-        }
+        completer.complete();
+        _onStatusChanged(status);
       },
     );
     checker.internetStatus.then(
       (status) {
-        completer.complete();
-        _onStatusChanged(status);
+        if (completer.canPerformAction(completer)) {
+          _onStatusChanged(status);
+          completer.complete();
+        }
       },
     );
   }

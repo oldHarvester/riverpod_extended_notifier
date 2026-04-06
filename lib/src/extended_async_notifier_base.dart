@@ -436,6 +436,9 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   FutureOr<State> _build() async {
     final initial = !_initialized;
+    ref.watch(
+      internetStatusProvider.select((value) => true),
+    );
     ref.listen(
       internetStatusProvider,
       (previous, next) {

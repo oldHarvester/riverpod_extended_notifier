@@ -31,7 +31,7 @@ mixin ExtendedNotifierBase<
 
   @override
   bool updateShouldNotify(State previous, State next) {
-    return _equality.equals(previous, next);
+    return _equality.notEquals(previous, next);
   }
 
   @override

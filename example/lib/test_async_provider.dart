@@ -38,7 +38,7 @@ class TestAsyncNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
   int? get maxRetries => super.maxRetries;
 
   @override
-  bool get disableRetries => false;
+  bool get disableRetries => true;
 
   @override
   Duration? get retriesTimeoutDuration => super.retriesTimeoutDuration;
