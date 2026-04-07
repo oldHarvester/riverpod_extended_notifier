@@ -57,7 +57,7 @@ mixin ExtendedNotifierBase<
 
   /// Useful if u have initial state
   @protected
-  State resolveState({
+  State initialStateResolver({
     State? initialState,
     required State Function() builder,
   }) {

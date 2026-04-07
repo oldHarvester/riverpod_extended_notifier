@@ -121,7 +121,7 @@ mixin ExtendedAsyncNotifierBase<
   }
 
   @protected
-  State resolveState({
+  State initialStateResolver({
     State? initialState,
     required State Function() builder,
   }) {
