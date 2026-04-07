@@ -23,7 +23,12 @@ mixin ExtendedNotifierBase<
 >
     on ExtendedProviderNotifierMixinBase<State, Arg, ExtendedRef> {
   @protected
-  State buildState();
+  State? get initialState;
+
+  bool _initialStateResolved = false;
+
+  @protected
+  State buildState(State? initialState);
 
   State? get stateOrNull;
 
@@ -121,19 +126,28 @@ mixin ExtendedNotifierBase<
     );
     final initialBuild = !_initialized;
     _beforeBuild();
-    final initialState = buildState();
-    final previousState = stateOrNull;
-    try {
-      return initialState;
-    } finally {
-      if (!initialBuild) {
-        _notifyEvent(
-          NotifierDidInvalidateEvent(
-            previous: previousState,
-            state: initialState,
-          ),
-        );
+    State? prepareInitialState() {
+      if (!_initialStateResolved && initialState != null) {
+        _initialStateResolved = true;
+        return initialState;
       }
+      return null;
     }
+    final state = buildState(prepareInitialState());
+    final previousState = stateOrNull;
+    if (!initialBuild) {
+      Future.delayed(
+        Duration.zero,
+        () {
+          _notifyEvent(
+            NotifierDidInvalidateEvent(
+              previous: previousState,
+              state: state,
+            ),
+          );
+        },
+      );
+    }
+    return state;
   }
 }

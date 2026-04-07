@@ -72,6 +72,11 @@ mixin ExtendedAsyncNotifierBase<
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
   final FlexibleEquality _equality = FlexibleEquality();
 
+  @protected
+  State? get initialState;
+
+  bool _initialStateResolved = false;
+
   FlexibleCompleter<T> _createCompleter<T>() =>
       FlexibleCompleter<T>()..future.ignore();
 
@@ -83,7 +88,11 @@ mixin ExtendedAsyncNotifierBase<
           if (keepLoadingWhileConnecting) {
             await _connectionWaiter;
           }
-          return buildState();
+          if (initialState != null && !_initialStateResolved) {
+            _initialStateResolved = true;
+            return buildState(initialState);
+          }
+          return buildState(null);
         },
         onError: disableRetries
             ? (retries, error, stk) {
@@ -106,7 +115,7 @@ mixin ExtendedAsyncNotifierBase<
       );
 
   @protected
-  FutureOr<State> buildState();
+  FutureOr<State> buildState(State? initialState);
 
   Future<bool> refresh() async {
     try {
@@ -194,7 +203,8 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
 
-  InternetConnectionStatus _internetStatus = InternetConnectionStatus.disconnected;
+  InternetConnectionStatus _internetStatus =
+      InternetConnectionStatus.disconnected;
 
   @protected
   InternetConnectionStatus get internetStatus => _internetStatus;
@@ -353,7 +363,9 @@ mixin ExtendedAsyncNotifierBase<
     switch (event) {
       case final AsyncNotifierCreateEvent<State> _:
         onCreate();
-        _internetStatus = ref.read(internetStatusProvider);
+        _internetStatus = ref.read(
+          RiverpodExtendedNotifierProviders.internetStatusProvider,
+        );
         break;
       case final AsyncNotifierInternetStatusChangedEvent<State> _:
         break;
@@ -440,10 +452,12 @@ mixin ExtendedAsyncNotifierBase<
   FutureOr<State> _build() async {
     final initial = !_initialized;
     ref.watch(
-      internetStatusProvider.select((value) => true),
+      RiverpodExtendedNotifierProviders.internetStatusProvider.select(
+        (value) => true,
+      ),
     );
     ref.listen(
-      internetStatusProvider,
+      RiverpodExtendedNotifierProviders.internetStatusProvider,
       (previous, next) {
         _onInternetStatusChanged(next);
       },
