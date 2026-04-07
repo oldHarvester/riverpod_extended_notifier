@@ -20,12 +20,17 @@ abstract final class RiverpodExtendedNotifierProviders {
 
 class InternetStatusNotifier
     extends ExtendedNotifier<InternetConnectionStatus> {
-  StreamSubscription<InternetConnectionStatus>? _connectionSub;
+  InternetStatusNotifier({
+    this.initialState,
+  });
+
   final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
   late final InternetConnectionChecker _connectionChecker = ref.read(
     RiverpodExtendedNotifierProviders.internetConnectionCheckerProvider,
   );
   FlexibleCompleter<InternetConnectionStatus>? _statusFetchCompleter;
+  StreamSubscription<InternetConnectionStatus>? _connectionSub;
+  final InternetConnectionStatus? initialState;
 
   @protected
   void onStatusChanged(InternetConnectionStatus status) {}
@@ -61,6 +66,7 @@ class InternetStatusNotifier
   void onCreate() {
     _connectionSub = _connectionChecker.onStatusChange.listen(
       (status) {
+        _statusFetchCompleter?.complete(status);
         _changeStatus(status);
       },
     );
@@ -80,7 +86,13 @@ class InternetStatusNotifier
 
   @override
   InternetConnectionStatus buildState() {
-    // ignore: invalid_use_of_visible_for_testing_member
-    return _connectionChecker.lastStatus ?? InternetConnectionStatus.connected;
+    return initialStateResolver(
+      initialState: initialState,
+      builder: () {
+        // ignore: invalid_use_of_visible_for_testing_member
+        return _connectionChecker.lastStatus ??
+            InternetConnectionStatus.connected;
+      },
+    );
   }
 }
