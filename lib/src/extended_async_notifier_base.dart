@@ -1,9 +1,9 @@
 part of '../riverpod_extended_notifier.dart';
 
-extension InternetStatusX on InternetStatus {
-  bool get connected => this == InternetStatus.connected;
+extension InternetStatusX on InternetConnectionStatus {
+  bool get connected => this == InternetConnectionStatus.connected;
 
-  bool get disconnected => this == InternetStatus.disconnected;
+  bool get disconnected => this == InternetConnectionStatus.disconnected;
 }
 
 typedef ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg extends Object?> =
@@ -194,10 +194,10 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
 
-  InternetStatus _internetStatus = InternetStatus.disconnected;
+  InternetConnectionStatus _internetStatus = InternetConnectionStatus.disconnected;
 
   @protected
-  InternetStatus get internetStatus => _internetStatus;
+  InternetConnectionStatus get internetStatus => _internetStatus;
 
   @protected
   Duration? get retriesTimeoutDuration => null;
@@ -328,7 +328,7 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
 
-  void _onInternetStatusChanged(InternetStatus status) {
+  void _onInternetStatusChanged(InternetConnectionStatus status) {
     if (status.disconnected && _connectionCompleter.isCompleted) {
       _connectionCompleter = FlexibleCompleter();
     } else if (status.connected) {

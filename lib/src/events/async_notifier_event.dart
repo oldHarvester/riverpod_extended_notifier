@@ -204,7 +204,7 @@ class AsyncNotifierInternetStatusChangedEvent<State>
     required this.status,
   });
   
-  final InternetStatus status;
+  final InternetConnectionStatus status;
   
   @override
   String get debugLabel => 'internet status changed: $status';

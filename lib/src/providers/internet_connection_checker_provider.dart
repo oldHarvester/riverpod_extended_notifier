@@ -1,26 +1,29 @@
 part of '../../riverpod_extended_notifier.dart';
 
-final internetConnectionCheckerProvider = Provider<InternetConnection>(
+final internetConnectionCheckerProvider = Provider<InternetConnectionChecker>(
   (ref) {
-    return InternetConnection.createInstance(
+    return InternetConnectionChecker.createInstance(
       checkInterval: Duration(seconds: 4),
     );
   },
 );
 
 final internetStatusProvider =
-    NotifierProvider<InternetStatusNotifier, InternetStatus>(
+    NotifierProvider<InternetStatusNotifier, InternetConnectionStatus>(
       () {
         return InternetStatusNotifier();
       },
     );
 
 class InternetStatusNotifier
-    extends ExtendedNotifier<InternetStatus> {
-  StreamSubscription<InternetStatus>? _connectionSub;
+    extends ExtendedNotifier<InternetConnectionStatus> {
+  StreamSubscription<InternetConnectionStatus>? _connectionSub;
   final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
+  late final InternetConnectionChecker _connectionChecker = ref.read(
+    internetConnectionCheckerProvider,
+  );
 
-  void _onStatusChanged(InternetStatus status) {
+  void _onStatusChanged(InternetConnectionStatus status) {
     if (status != state) {
       state = status;
       logger.log(status.name);
@@ -30,14 +33,13 @@ class InternetStatusNotifier
   @override
   void onCreate() {
     final completer = FlexibleCompleter();
-    final checker = ref.read(internetConnectionCheckerProvider);
-    _connectionSub = checker.onStatusChange.listen(
+    _connectionSub = _connectionChecker.onStatusChange.listen(
       (status) {
         completer.complete();
         _onStatusChanged(status);
       },
     );
-    checker.internetStatus.then(
+    _connectionChecker.connectionStatus.then(
       (status) {
         if (completer.canPerformAction(completer)) {
           _onStatusChanged(status);
@@ -54,7 +56,8 @@ class InternetStatusNotifier
   }
 
   @override
-  InternetStatus buildState() {
-    return InternetStatus.connected;
+  InternetConnectionStatus buildState() {
+    // ignore: invalid_use_of_visible_for_testing_member
+    return _connectionChecker.lastStatus ?? InternetConnectionStatus.connected;
   }
 }
