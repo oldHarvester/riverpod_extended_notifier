@@ -47,10 +47,7 @@ class TestAsyncNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
   Duration get retryRestartDuration => super.retryRestartDuration;
 
   @override
-  FutureOr<List<int>> buildState(List<int>? initialState) async {
-    if (initialState != null) {
-      return initialState;
-    }
+  FutureOr<List<int>> buildState() async {
     await Future.delayed(duration);
     if (retries < 1) {
       throw UnimplementedError('Some error: $retries');

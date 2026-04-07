@@ -22,13 +22,10 @@ mixin ExtendedNotifierBase<
   ExtendedRef extends Ref<State>
 >
     on ExtendedProviderNotifierMixinBase<State, Arg, ExtendedRef> {
-  @protected
-  State? get initialState;
-
   bool _initialStateResolved = false;
 
   @protected
-  State buildState(State? initialState);
+  State buildState();
 
   State? get stateOrNull;
 
@@ -57,6 +54,19 @@ mixin ExtendedNotifierBase<
   }
 
   void onEvent(NotifierEvent<State> event) {}
+
+  /// Useful if u have initial state
+  @protected
+  State resolveState({
+    State? initialState,
+    required State Function() builder,
+  }) {
+    if (!_initialStateResolved && initialState != null) {
+      _initialStateResolved = true;
+      return initialState as State;
+    }
+    return builder();
+  }
 
   void _notifyEvent(NotifierEvent<State> event) {
     if (debugEvents) {
@@ -126,14 +136,7 @@ mixin ExtendedNotifierBase<
     );
     final initialBuild = !_initialized;
     _beforeBuild();
-    State? prepareInitialState() {
-      if (!_initialStateResolved && initialState != null) {
-        _initialStateResolved = true;
-        return initialState;
-      }
-      return null;
-    }
-    final state = buildState(prepareInitialState());
+    final state = buildState();
     final previousState = stateOrNull;
     if (!initialBuild) {
       Future.delayed(

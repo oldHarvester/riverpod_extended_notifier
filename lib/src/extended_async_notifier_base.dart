@@ -72,9 +72,6 @@ mixin ExtendedAsyncNotifierBase<
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
   final FlexibleEquality _equality = FlexibleEquality();
 
-  @protected
-  State? get initialState;
-
   bool _initialStateResolved = false;
 
   FlexibleCompleter<T> _createCompleter<T>() =>
@@ -88,11 +85,7 @@ mixin ExtendedAsyncNotifierBase<
           if (keepLoadingWhileConnecting) {
             await _connectionWaiter;
           }
-          if (initialState != null && !_initialStateResolved) {
-            _initialStateResolved = true;
-            return buildState(initialState);
-          }
-          return buildState(null);
+          return buildState();
         },
         onError: disableRetries
             ? (retries, error, stk) {
@@ -115,7 +108,7 @@ mixin ExtendedAsyncNotifierBase<
       );
 
   @protected
-  FutureOr<State> buildState(State? initialState);
+  FutureOr<State> buildState();
 
   Future<bool> refresh() async {
     try {
@@ -125,6 +118,18 @@ mixin ExtendedAsyncNotifierBase<
     } catch (e) {
       return false;
     }
+  }
+
+  @protected
+  State resolveState({
+    State? initialState,
+    required State Function() builder,
+  }) {
+    if (!_initialStateResolved && initialState != null) {
+      _initialStateResolved = true;
+      return initialState as State;
+    }
+    return builder();
   }
 
   @protected

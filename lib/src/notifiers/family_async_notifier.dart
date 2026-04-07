@@ -7,15 +7,6 @@ abstract class ExtendedFamilyAsyncNotifier<State, Arg>
     with
         ExtendedAsyncNotifierMixinBase<State, Arg>,
         ExtendedAsyncNotifierMixin<State, Arg> {
-  ExtendedFamilyAsyncNotifier({
-    State? initialState,
-  }) : _initialState = initialState;
-
-  @override
-  State? get initialState => _initialState;
-
-  final State? _initialState;
-
   @override
   FutureOr<State> build(Arg arg) => _build();
 }
@@ -25,15 +16,6 @@ abstract class ExtendedAutoDisposeFamilyAsyncNotifier<State, Arg>
     with
         ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg>,
         ExtendedAutoDisposeAsyncNotifierMixin<State, Arg> {
-  ExtendedAutoDisposeFamilyAsyncNotifier({
-    State? initialState,
-  }) : _initialState = initialState;
-
-  @override
-  State? get initialState => _initialState;
-
-  final State? _initialState;
-
   @override
   FutureOr<State> build(Arg arg) => _build();
 }

@@ -79,8 +79,8 @@ class InternetStatusNotifier
   }
 
   @override
-  InternetConnectionStatus buildState(InternetConnectionStatus? initialState) {
+  InternetConnectionStatus buildState() {
     // ignore: invalid_use_of_visible_for_testing_member
-    return initialState ?? _connectionChecker.lastStatus ?? InternetConnectionStatus.connected;
+    return _connectionChecker.lastStatus ?? InternetConnectionStatus.connected;
   }
 }

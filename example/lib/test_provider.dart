@@ -20,10 +20,7 @@ class TestNotifier extends ExtendedAutoDisposeNotifier<List<int>> {
   bool get debugEvents => true;
 
   @override
-  List<int> buildState(List<int>? initialState) {
-    if (initialState != null) {
-      return initialState;
-    }
+  List<int> buildState() {
     return List.generate(
       10,
       (index) => Random().nextInt(10),
