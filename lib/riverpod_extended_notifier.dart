@@ -2,10 +2,10 @@
 
 import 'dart:async';
 
+import 'package:flexible_internet_checker/flexible_internet_checker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_toolkit/flutter_toolkit.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 
 import 'src/clever_widgets_binding.dart';

@@ -14,10 +14,10 @@ class TestNotifier extends ExtendedAutoDisposeNotifier<List<int>> {
   String? get debugLabel => 'TestNotifier';
 
   @override
-  bool get debugLifecycle => true;
+  bool get debugLifecycle => false;
 
   @override
-  bool get debugEvents => true;
+  bool get debugEvents => false;
 
   @override
   List<int> buildState() {

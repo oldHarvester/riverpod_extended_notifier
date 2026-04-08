@@ -53,10 +53,10 @@ packages:
     dependency: transitive
     description:
       name: connectivity_plus
-      sha256: b5e72753cf63becce2c61fd04dfe0f1c430cc5278b53a1342dc5ad839eab29ec
+      sha256: b8fe52979ff12432ecf8f0abf6ff70410b1bb734be1c9e4f2f86807ad7166c79
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.5"
+    version: "7.1.0"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -105,6 +105,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  flexible_internet_checker:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: c0b6cbea9a47ce2e1f7e7193f92e233abe0a76d6
+      url: "https://github.com/oldHarvester/flexible_internet_checker.git"
+    source: git
+    version: "0.0.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -152,7 +161,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "0c6c63d72a203561805940b920836c0e22b31ae9"
+      resolved-ref: "99cbcbd1e7049b67be9186256575f7ffda878b4f"
       url: "https://github.com/oldHarvester/flutter_toolkit.git"
     source: git
     version: "0.0.3+3"
@@ -177,14 +186,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
-  internet_connection_checker:
-    dependency: transitive
-    description:
-      name: internet_connection_checker
-      sha256: ee08f13d8b13b978affe226e9274ca3ba7a9bed07c9479e8ae245f785b7a488a
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
   leak_tracker:
     dependency: transitive
     description:

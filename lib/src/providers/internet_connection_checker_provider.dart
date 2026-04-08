@@ -1,72 +1,48 @@
 part of '../../riverpod_extended_notifier.dart';
 
 abstract final class RiverpodExtendedNotifierProviders {
-  static final internetConnectionCheckerProvider =
-      Provider<InternetConnectionChecker>(
-        (ref) {
-          return InternetConnectionChecker.createInstance(
-            checkInterval: Duration(seconds: 4),
-          );
-        },
+  static final internetChecker = Provider<FlexibleInternetChecker>(
+    (ref) {
+      return FlexibleInternetChecker.createInstance(
+        interval: Duration(seconds: 4),
       );
+    },
+  );
 
-  static final internetStatusProvider =
-      NotifierProvider<InternetStatusNotifier, InternetConnectionStatus>(
+  static final internetStatus =
+      NotifierProvider<InternetStatusNotifier, InternetStatus>(
         () {
           return InternetStatusNotifier();
         },
       );
 }
 
-class InternetStatusNotifier
-    extends ExtendedNotifier<InternetConnectionStatus> {
-  InternetStatusNotifier({
-    this.initialState,
-  });
-
+class InternetStatusNotifier extends ExtendedNotifier<InternetStatus> {
   final CustomLogger logger = CustomLogger(owner: 'InternetStatus');
-  late final InternetConnectionChecker _connectionChecker = ref.read(
-    RiverpodExtendedNotifierProviders.internetConnectionCheckerProvider,
+  late final FlexibleInternetChecker _connectionChecker = ref.read(
+    RiverpodExtendedNotifierProviders.internetChecker,
   );
-  FlexibleCompleter<InternetConnectionStatus>? _statusFetchCompleter;
-  StreamSubscription<InternetConnectionStatus>? _connectionSub;
-  final InternetConnectionStatus? initialState;
+  StreamSubscription<InternetStatus>? _connectionSub;
 
   @protected
-  void onStatusChanged(InternetConnectionStatus status) {}
+  void onStatusChanged(InternetStatus status) {}
 
-  void _changeStatus(InternetConnectionStatus status) {
+  void _changeStatus(InternetStatus status) {
     if (status != state) {
       state = status;
-      logger.log(status.name);
+      logger.log('${status.name} ${DateTime.now()}');
       onStatusChanged(status);
     }
   }
 
-  Future<InternetConnectionStatus> checkStatus() async {
-    final oldCompleter = _statusFetchCompleter;
-    if (oldCompleter != null && !oldCompleter.isCompleted) {
-      return oldCompleter.future;
-    }
-    final completer = FlexibleCompleter<InternetConnectionStatus>();
-    try {
-      final status = await _connectionChecker.connectionStatus;
-      if (completer.canPerformAction(_statusFetchCompleter)) {
-        completer.complete(status);
-        _changeStatus(status);
-      }
-    } catch (e, stk) {
-      completer.completeError(e, stk);
-      rethrow;
-    }
-    return completer.future;
+  Future<InternetStatus> checkStatus() async {
+    return _connectionChecker.fetchStatus();
   }
 
   @override
   void onCreate() {
-    _connectionSub = _connectionChecker.onStatusChange.listen(
+    _connectionSub ??= _connectionChecker.status.listen(
       (status) {
-        _statusFetchCompleter?.complete(status);
         _changeStatus(status);
       },
     );
@@ -85,14 +61,7 @@ class InternetStatusNotifier
   }
 
   @override
-  InternetConnectionStatus buildState() {
-    return initialStateResolver(
-      initialState: initialState,
-      builder: () {
-        // ignore: invalid_use_of_visible_for_testing_member
-        return _connectionChecker.lastStatus ??
-            InternetConnectionStatus.connected;
-      },
-    );
+  InternetStatus buildState() {
+    return _connectionChecker.lastStatus ?? InternetStatus.disconnected;
   }
 }

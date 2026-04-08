@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flexible_internet_checker/flexible_internet_checker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 part 'notifier_event.dart';
 part 'async_notifier_event.dart';

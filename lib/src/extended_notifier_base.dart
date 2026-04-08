@@ -78,6 +78,7 @@ mixin ExtendedNotifierBase<
         onCreate();
         break;
       case NotifierWillInvalidateEvent<State> _:
+        _initialStateResolved = true;
         onWillInvalidate();
         break;
       case NotifierDidInvalidateEvent<State> _:

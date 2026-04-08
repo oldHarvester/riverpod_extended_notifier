@@ -1,11 +1,5 @@
 part of '../riverpod_extended_notifier.dart';
 
-extension InternetStatusX on InternetConnectionStatus {
-  bool get connected => this == InternetConnectionStatus.connected;
-
-  bool get disconnected => this == InternetConnectionStatus.disconnected;
-}
-
 typedef ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg extends Object?> =
     ExtendedProviderNotifierMixinBase<
       AsyncValue<State>,
@@ -66,7 +60,8 @@ mixin ExtendedAsyncNotifierBase<
     on ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg, ExtendedRef> {
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
-  late FlexibleCompleter<void> _connectionCompleter = internetStatus.connected
+  late FlexibleCompleter<void> _connectionCompleter =
+      internetStatus?.connected == true
       ? (_createCompleter()..complete())
       : _createCompleter();
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
@@ -82,9 +77,6 @@ mixin ExtendedAsyncNotifierBase<
   AutoRestartExecutor<State> _createRetryExecutor() =>
       AutoRestartExecutor<State>(
         handler: () async {
-          if (keepLoadingWhileConnecting) {
-            await _connectionWaiter;
-          }
           return buildState();
         },
         onError: disableRetries
@@ -129,6 +121,12 @@ mixin ExtendedAsyncNotifierBase<
       _initialStateResolved = true;
       return initialState as State;
     }
+    return builder();
+  }
+
+  @protected
+  Future<State> useConnectionTx(Future<State> Function() builder) async {
+    await _connectionWaiter;
     return builder();
   }
 
@@ -208,11 +206,10 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
 
-  InternetConnectionStatus _internetStatus =
-      InternetConnectionStatus.disconnected;
+  InternetStatus? _internetStatus;
 
   @protected
-  InternetConnectionStatus get internetStatus => _internetStatus;
+  InternetStatus? get internetStatus => _internetStatus;
 
   @protected
   Duration? get retriesTimeoutDuration => null;
@@ -305,6 +302,7 @@ mixin ExtendedAsyncNotifierBase<
     /// Order
     /// 1. state completers
     /// 2. retry executors
+    _initialStateResolved = true;
     _stateCompleter.cancel();
     _stateCompleter = _createCompleter();
     _retryExecutor.cancel();
@@ -343,18 +341,20 @@ mixin ExtendedAsyncNotifierBase<
   @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
 
-  void _onInternetStatusChanged(InternetConnectionStatus status) {
+  void _onInternetStatusChanged(InternetStatus status) {
     if (status.disconnected && _connectionCompleter.isCompleted) {
       _connectionCompleter = FlexibleCompleter();
     } else if (status.connected) {
       _connectionCompleter.complete();
     }
-    _notifyEvent(
-      AsyncNotifierInternetStatusChangedEvent(
-        status: status,
-      ),
-    );
-    _internetStatus = status;
+    if (_internetStatus != status) {
+      _notifyEvent(
+        AsyncNotifierInternetStatusChangedEvent(
+          status: status,
+        ),
+      );
+      _internetStatus = status;
+    }
     if (status.connected) {
       _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onInternetGained);
     }
@@ -367,10 +367,10 @@ mixin ExtendedAsyncNotifierBase<
     onEvent(event);
     switch (event) {
       case final AsyncNotifierCreateEvent<State> _:
-        onCreate();
         _internetStatus = ref.read(
-          RiverpodExtendedNotifierProviders.internetStatusProvider,
+          RiverpodExtendedNotifierProviders.internetStatus,
         );
+        onCreate();
         break;
       case final AsyncNotifierInternetStatusChangedEvent<State> _:
         break;
@@ -381,9 +381,9 @@ mixin ExtendedAsyncNotifierBase<
         onCancel();
         break;
       case final AsyncNotifierResumeEvent<State> _:
-        onResume();
         _resolveErrorRefreshTrigger(ErrorRefreshTrigger.onResume);
         _resolveRefreshTrigger(RefreshTrigger.onResume);
+        onResume();
         break;
       case final AsyncNotifierAddedListener<State> _:
         break;
@@ -457,12 +457,12 @@ mixin ExtendedAsyncNotifierBase<
   FutureOr<State> _build() async {
     final initial = !_initialized;
     ref.watch(
-      RiverpodExtendedNotifierProviders.internetStatusProvider.select(
+      RiverpodExtendedNotifierProviders.internetStatus.select(
         (value) => true,
       ),
     );
     ref.listen(
-      RiverpodExtendedNotifierProviders.internetStatusProvider,
+      RiverpodExtendedNotifierProviders.internetStatus,
       (previous, next) {
         _onInternetStatusChanged(next);
       },

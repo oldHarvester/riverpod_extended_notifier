@@ -16,6 +16,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   riverpod: ^2.6.1
   flutter_riverpod: ^2.6.1
+  flexible_internet_checker:
+    git:
+      url: https://github.com/oldHarvester/flexible_internet_checker.git
 
 dev_dependencies:
   flutter_test:
