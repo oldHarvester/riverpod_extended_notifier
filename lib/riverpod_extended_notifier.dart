@@ -11,7 +11,6 @@ import 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
 import 'src/clever_widgets_binding.dart';
 
 export 'package:riverpod_extended_notifier/src/events/notifier_event_base.dart';
-export 'src/extensions/async_value_extension.dart';
 
 part 'src/notifiers/notifier.dart';
 part 'src/notifiers/family_notifier.dart';
@@ -21,6 +20,7 @@ part 'src/extended_async_notifier_base.dart';
 part 'src/extended_notifier_base.dart';
 part 'src/exceptions/exceptions.dart';
 part 'src/providers/internet_connection_checker_provider.dart';
+part 'src/extensions/async_value_extension.dart';
 
 /// For install u need
 /// Android
@@ -30,8 +30,11 @@ part 'src/providers/internet_connection_checker_provider.dart';
 /// <key>com.apple.security.network.server</key>
 /// <true/>
 
-mixin ExtendedProviderNotifierMixinBase<State, Arg extends Object?,
-    ExtendedRef extends Ref<State>> {
+mixin ExtendedProviderNotifierMixinBase<
+  State,
+  Arg extends Object?,
+  ExtendedRef extends Ref<State>
+> {
   ExtendedRef get ref;
 
   State get state;

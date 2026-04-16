@@ -1,6 +1,4 @@
-import 'dart:async';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+part of '../../riverpod_extended_notifier.dart';
 
 extension AsyncValueExtension<T> on AsyncValue<T> {
   Future<T> get asFuture {
