@@ -20,6 +20,7 @@ part 'src/extended_async_notifier_base.dart';
 part 'src/extended_notifier_base.dart';
 part 'src/exceptions/exceptions.dart';
 part 'src/providers/internet_connection_checker_provider.dart';
+part 'src/extensions/async_value_extension.dart';
 
 /// For install u need
 /// Android
