@@ -339,6 +339,9 @@ mixin ExtendedAsyncNotifierBase<
   void onResume() {}
 
   @protected
+  void onPause() {}
+
+  @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
 
   void _onInternetStatusChanged(InternetStatus status) {

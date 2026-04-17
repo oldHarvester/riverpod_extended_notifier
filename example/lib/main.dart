@@ -1,8 +1,12 @@
-import 'package:example/example_page.dart';
+import 'dart:developer' as dev;
+
+import 'package:example/transaction_check_provider.dart';
 import 'package:flexible_internet_checker/flexible_internet_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_extended_notifier/riverpod_extended_notifier.dart';
+
+import 'example_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +34,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget buildButton({
+      required String title,
+      VoidCallback? onPressed,
+    }) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(title),
+      );
+    }
+
     return ProviderScope(
       overrides: [
         RiverpodExtendedNotifierProviders.internetChecker.overrideWithValue(
@@ -37,21 +51,46 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        home: Builder(
-          builder: (context) {
+        home: Consumer(
+          builder: (context, ref, child) {
             return Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return ExamplePage();
-                        },
-                      ),
-                    );
-                  },
-                  child: Text('Open'),
+              body: SizedBox.expand(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    buildButton(
+                      title: 'Open',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ExamplePage();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    buildButton(
+                      title: 'Run transaction',
+                      onPressed: () {
+                        ref.transaction(
+                          (ref) async {
+                            dev.log('start transaction', name: 'Transaction');
+                            final controller = ref.read(
+                              transactionCheckProvider.notifier,
+                            );
+                            final items = await controller.fetchItems();
+                            dev.log(
+                              'end transaction: $items',
+                              name: 'Transaction',
+                            );
+                            return items;
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             );

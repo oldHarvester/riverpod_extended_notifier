@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flexible_internet_checker/flexible_internet_checker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_toolkit/flutter_toolkit.dart';
@@ -21,6 +22,9 @@ part 'src/extended_notifier_base.dart';
 part 'src/exceptions/exceptions.dart';
 part 'src/providers/internet_connection_checker_provider.dart';
 part 'src/extensions/async_value_extension.dart';
+part 'src/extensions/ref_extension.dart';
+part 'src/extensions/widget_ref_extension.dart';
+part 'src/mutations/transaction.dart';
 
 /// For install u need
 /// Android
