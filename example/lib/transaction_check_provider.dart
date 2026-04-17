@@ -19,6 +19,9 @@ class TransactionCheckNotifier
   @override
   bool get debugLifecycle => true;
 
+  @override
+  bool get debugEvents => false;
+
   Future<List<int>> fetchItems() async {
     return safeFuture;
   }

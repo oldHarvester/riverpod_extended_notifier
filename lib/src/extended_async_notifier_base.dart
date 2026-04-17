@@ -1,37 +1,28 @@
 part of '../riverpod_extended_notifier.dart';
 
-typedef ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg extends Object?> =
-    ExtendedProviderNotifierMixinBase<
-      AsyncValue<State>,
-      Arg,
-      AutoDisposeAsyncNotifierProviderRef<State>
-    >;
+typedef ExtendedAutoDisposeAsyncNotifierMixinBase<State, Arg extends Object?>
+    = ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg,
+        AutoDisposeAsyncNotifierProviderRef<State>>;
 
-typedef ExtendedAutoDisposeAsyncNotifierMixin<State, Arg extends Object?> =
-    ExtendedAsyncNotifierBase<
-      State,
-      Arg,
-      AutoDisposeAsyncNotifierProviderRef<State>
-    >;
+typedef ExtendedAutoDisposeAsyncNotifierMixin<State, Arg extends Object?>
+    = ExtendedAsyncNotifierBase<State, Arg,
+        AutoDisposeAsyncNotifierProviderRef<State>>;
 
-typedef ExtendedAsyncNotifierMixinBase<State, Arg extends Object?> =
-    ExtendedProviderNotifierMixinBase<
-      AsyncValue<State>,
-      Arg,
-      AsyncNotifierProviderRef<State>
-    >;
+typedef ExtendedAsyncNotifierMixinBase<State, Arg extends Object?>
+    = ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg,
+        AsyncNotifierProviderRef<State>>;
 
-typedef ExtendedAsyncNotifierMixin<State, Arg extends Object?> =
-    ExtendedAsyncNotifierBase<State, Arg, AsyncNotifierProviderRef<State>>;
+typedef ExtendedAsyncNotifierMixin<State, Arg extends Object?>
+    = ExtendedAsyncNotifierBase<State, Arg, AsyncNotifierProviderRef<State>>;
 
-typedef AsyncNotifierUpdateResolver<State> =
-    FutureOr<State> Function(State state);
+typedef AsyncNotifierUpdateResolver<State> = FutureOr<State> Function(
+    State state);
 
-typedef AsyncNotifierUpdateResolverOrNull<State> =
-    FutureOr<State?> Function(State state);
+typedef AsyncNotifierUpdateResolverOrNull<State> = FutureOr<State?> Function(
+    State state);
 
-typedef AsyncNotifierUpdateOnErrorResolver<State> =
-    FutureOr<State> Function(Object err, StackTrace stackTrace);
+typedef AsyncNotifierUpdateOnErrorResolver<State> = FutureOr<State> Function(
+    Object err, StackTrace stackTrace);
 
 typedef AsyncNotifierOnDesyncResolver<State> = void Function(State state);
 
@@ -52,18 +43,15 @@ enum RefreshTrigger {
   onResume,
 }
 
-mixin ExtendedAsyncNotifierBase<
-  State,
-  Arg extends Object?,
-  ExtendedRef extends Ref<AsyncValue<State>>
->
+mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
+        ExtendedRef extends Ref<AsyncValue<State>>>
     on ExtendedProviderNotifierMixinBase<AsyncValue<State>, Arg, ExtendedRef> {
   late FlexibleCompleter<State> _stateCompleter = _createCompleter();
   late FlexibleCompleter<State> _refreshRecompleter = _createCompleter();
   late FlexibleCompleter<void> _connectionCompleter =
       internetStatus?.connected == true
-      ? (_createCompleter()..complete())
-      : _createCompleter();
+          ? (_createCompleter()..complete())
+          : _createCompleter();
   late AutoRestartExecutor<State> _retryExecutor = _createRetryExecutor();
   final FlexibleEquality _equality = FlexibleEquality();
 
@@ -172,7 +160,8 @@ mixin ExtendedAsyncNotifierBase<
     Object error,
     StackTrace? stackTrace,
     ErrorRefreshTrigger trigger,
-  ) => true;
+  ) =>
+      true;
 
   @override
   bool updateShouldNotify(AsyncValue<State> previous, AsyncValue<State> next) {
@@ -201,7 +190,8 @@ mixin ExtendedAsyncNotifierBase<
     int retries,
     Object error,
     StackTrace stackTrace,
-  ) => true;
+  ) =>
+      true;
 
   @protected
   Duration get retryRestartDuration => Duration(seconds: 5);
@@ -337,9 +327,6 @@ mixin ExtendedAsyncNotifierBase<
 
   @protected
   void onResume() {}
-
-  @protected
-  void onPause() {}
 
   @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
