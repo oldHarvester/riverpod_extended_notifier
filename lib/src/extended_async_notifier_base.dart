@@ -118,6 +118,24 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
     return builder();
   }
 
+  @override
+  set state(AsyncValue<State> value) {
+    super.state = value.when(
+      skipError: false,
+      skipLoadingOnRefresh: false,
+      skipLoadingOnReload: false,
+      data: (data) {
+        return AsyncData(resolveValue(data, state, false));
+      },
+      error: (error, stackTrace) {
+        return value;
+      },
+      loading: () {
+        return value;
+      },
+    );
+  }
+
   @protected
   ConcurrencyStrategy get concurrencyStrategy => ConcurrencyStrategy.switchMap;
 
@@ -217,8 +235,9 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
   bool get keepLoadingWhileConnecting => false;
 
   /// With this method you can override build success
+  /// `set state` must call super.state = state;
   @protected
-  State resolveValue(State value, AsyncValue<State> previous) {
+  State resolveValue(State value, AsyncValue<State> previous, bool fromBuild) {
     return value;
   }
 
@@ -258,7 +277,7 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
       var initialValue = await _retryExecutor.start();
       if (isSync()) {
         final previousState = state;
-        initialValue = resolveValue(initialValue, previousState);
+        initialValue = resolveValue(initialValue, previousState, true);
         _refreshRecompleter.complete(initialValue);
         completer.complete(initialValue);
         final nextState = AsyncData(
