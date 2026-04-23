@@ -348,6 +348,9 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
   void onResume() {}
 
   @protected
+  void onDidLoad(AsyncNotifierDidLoadEvent event) {}
+
+  @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
 
   void _onInternetStatusChanged(InternetStatus status) {
@@ -406,6 +409,7 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
       case final AsyncNotifierDidLoadEvent<State> _:
         final current = event.state;
         final previous = event.previous;
+        onDidLoad(event);
         return current.when(
           skipError: false,
           skipLoadingOnRefresh: false,
