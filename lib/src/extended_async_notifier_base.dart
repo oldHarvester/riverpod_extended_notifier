@@ -234,7 +234,7 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
   @protected
   bool get keepLoadingWhileConnecting => false;
 
-  /// With this method you can override build success
+  /// With this method you can override build success and `state = ${state}`
   /// `set state` must call super.state = state;
   @protected
   State resolveValue(State value, AsyncValue<State> previous, bool fromBuild) {

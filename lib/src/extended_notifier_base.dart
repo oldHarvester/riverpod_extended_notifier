@@ -1,26 +1,20 @@
 part of '../riverpod_extended_notifier.dart';
 
-typedef ExtendedNotifierMixin<State, Arg extends Object?> =
-    ExtendedNotifierBase<State, Arg, NotifierProviderRef<State>>;
+typedef ExtendedNotifierMixin<State, Arg extends Object?>
+    = ExtendedNotifierBase<State, Arg, NotifierProviderRef<State>>;
 
-typedef ExtendedNotifierMixinBase<State, Arg extends Object?> =
-    ExtendedProviderNotifierMixinBase<State, Arg, NotifierProviderRef<State>>;
+typedef ExtendedNotifierMixinBase<State, Arg extends Object?>
+    = ExtendedProviderNotifierMixinBase<State, Arg, NotifierProviderRef<State>>;
 
-typedef ExtendedAutoDisposeNotifierMixin<State, Arg extends Object?> =
-    ExtendedNotifierBase<State, Arg, AutoDisposeNotifierProviderRef<State>>;
+typedef ExtendedAutoDisposeNotifierMixin<State, Arg extends Object?>
+    = ExtendedNotifierBase<State, Arg, AutoDisposeNotifierProviderRef<State>>;
 
-typedef ExtendedAutoDisposeNotifierMixinBase<State, Arg extends Object?> =
-    ExtendedProviderNotifierMixinBase<
-      State,
-      Arg,
-      AutoDisposeNotifierProviderRef<State>
-    >;
+typedef ExtendedAutoDisposeNotifierMixinBase<State, Arg extends Object?>
+    = ExtendedProviderNotifierMixinBase<State, Arg,
+        AutoDisposeNotifierProviderRef<State>>;
 
-mixin ExtendedNotifierBase<
-  State,
-  Arg extends Object?,
-  ExtendedRef extends Ref<State>
->
+mixin ExtendedNotifierBase<State, Arg extends Object?,
+        ExtendedRef extends Ref<State>>
     on ExtendedProviderNotifierMixinBase<State, Arg, ExtendedRef> {
   bool _initialStateResolved = false;
 
@@ -34,6 +28,11 @@ mixin ExtendedNotifierBase<
   @override
   bool updateShouldNotify(State previous, State next) {
     return _equality.notEquals(previous, next);
+  }
+
+  @override
+  set state(State value) {
+    super.state = resolveValue(value, state, false);
   }
 
   @override
@@ -51,6 +50,12 @@ mixin ExtendedNotifierBase<
     if (now <= 0) {
       _notifyEvent(NotifierCancelEvent());
     }
+  }
+
+  /// With this method you can override build success and `state = ${state}`
+  /// `set state` must call super.state = state;
+  State resolveValue(State value, State? previous, bool fromBuild) {
+    return value;
   }
 
   void onEvent(NotifierEvent<State> event) {}
@@ -152,6 +157,6 @@ mixin ExtendedNotifierBase<
         },
       );
     }
-    return state;
+    return resolveValue(state, previousState, true);
   }
 }
