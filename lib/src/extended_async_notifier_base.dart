@@ -101,15 +101,15 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
   }
 
   @protected
-  State initialStateResolver({
+  FutureOr<State> initialStateResolver({
     State? initialState,
-    required State Function() builder,
+    required FutureOr<State> Function(AsyncValue<State> previuos) builder,
   }) {
     if (!_initialStateResolved && initialState != null) {
       _initialStateResolved = true;
       return initialState as State;
     }
-    return builder();
+    return builder(state);
   }
 
   @protected

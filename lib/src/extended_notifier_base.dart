@@ -64,13 +64,13 @@ mixin ExtendedNotifierBase<State, Arg extends Object?,
   @protected
   State initialStateResolver({
     State? initialState,
-    required State Function() builder,
+    required State Function(State? previous) builder,
   }) {
     if (!_initialStateResolved && initialState != null) {
       _initialStateResolved = true;
       return initialState as State;
     }
-    return builder();
+    return builder(stateOrNull);
   }
 
   void _notifyEvent(NotifierEvent<State> event) {

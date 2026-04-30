@@ -48,13 +48,17 @@ class TestAsyncNotifier extends ExtendedAutoDisposeAsyncNotifier<List<int>> {
 
   @override
   FutureOr<List<int>> buildState() async {
-    return useConnectionTx(
-      () async {
-        await Future.delayed(duration);
-        if (retries < 1) {
-          throw UnimplementedError('Some error: $retries');
-        }
-        return List.generate(5, (index) => Random().nextInt(10));
+    return initialStateResolver(
+      builder: (previous) {
+        return useConnectionTx(
+          () async {
+            await Future.delayed(duration);
+            // if (retries < 1) {
+            //   throw UnimplementedError('Some error: $retries');
+            // }
+            return List.generate(5, (index) => Random().nextInt(10));
+          },
+        );
       },
     );
   }
