@@ -348,7 +348,7 @@ mixin ExtendedAsyncNotifierBase<State, Arg extends Object?,
   void onResume() {}
 
   @protected
-  void onDidLoad(AsyncNotifierDidLoadEvent event) {}
+  void onDidLoad(AsyncNotifierDidLoadEvent<State> event) {}
 
   @protected
   void onEvent(AsyncNotifierEvent<State> event) {}
